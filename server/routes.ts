@@ -73,7 +73,9 @@ export async function registerRoutes(
       
       HARD RULES:
       1. Strictly separate Ingredients (food items) from Spices (seasonings, salt, pepper, herbs).
-      2. If quantity is missing, infer it or use "a gosto" for spices.
+         - Ingredients MUST have quantity and unit (e.g., 500g, 1 xícara).
+         - Spices can have optional quantity but NO unit (e.g., "sal", "pimenta a gosto").
+      2. If quantity is missing for Ingredients, infer it. For Spices, use "a gosto" if quantity is null.
       3. Format Step-by-step instructions clearly.
       4. Suggest a Title, Description, Prep Time (minutes), Difficulty (Facil, Media, Dificil), Category (CafeManha, CafeTarde, Almoco, Jantar, Sobremesa, Outros).
       5. Translate everything to Portuguese.
@@ -94,7 +96,7 @@ export async function registerRoutes(
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
-      messages: [{ role: "system", content: "You are a professional chef assistant." }, { role: "user", content: prompt }],
+      messages: [{ role: "system", content: "You are a professional chef assistant. You strictly follow the separation between ingredients and spices." }, { role: "user", content: prompt }],
       response_format: { type: "json_object" },
     });
 
@@ -102,6 +104,20 @@ export async function registerRoutes(
     if (!content) throw new Error("AI returned empty response");
     
     const data = JSON.parse(content);
+    
+    // Explicit server-side validation of the separation rule
+    if (data.ingredients && data.spices) {
+      const commonItems = data.ingredients.filter((i: any) => 
+        data.spices.some((s: any) => s.name.toLowerCase() === i.name.toLowerCase())
+      );
+      if (commonItems.length > 0) {
+        // Force cleanup if AI hallucinated overlap
+        data.ingredients = data.ingredients.filter((i: any) => 
+          !commonItems.some((c: any) => c.name === i.name)
+        );
+      }
+    }
+
     return { ...data, sourceUrl: originalUrl };
   }
 
