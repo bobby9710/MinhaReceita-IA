@@ -8,10 +8,10 @@ export function Sidebar() {
   const { logout, user } = useAuth();
 
   const navItems = [
-    { href: "/", icon: Home, label: "Dashboard" },
-    { href: "/recipes", icon: Book, label: "My Recipes" },
-    { href: "/meal-planner", icon: Calendar, label: "Meal Planner" },
-    { href: "/shopping-list", icon: ShoppingCart, label: "Shopping List" },
+    { href: "/", icon: Home, label: "Painel" },
+    { href: "/recipes", icon: Book, label: "Minhas Receitas" },
+    { href: "/meal-planner", icon: Calendar, label: "Planejador" },
+    { href: "/shopping-list", icon: ShoppingCart, label: "Lista de Compras" },
   ];
 
   return (
@@ -25,7 +25,7 @@ export function Sidebar() {
         <Link href="/recipes/new">
           <button className="w-full bg-primary text-primary-foreground rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:translate-y-[-2px] transition-all duration-300 active:translate-y-0">
             <PlusCircle className="w-5 h-5" />
-            <span>New Recipe</span>
+            <span>Nova Receita</span>
           </button>
         </Link>
       </div>
@@ -66,7 +66,7 @@ export function Sidebar() {
           className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-muted-foreground hover:text-destructive transition-colors"
         >
           <LogOut className="w-4 h-4" />
-          <span>Sign Out</span>
+          <span>Sair</span>
         </button>
       </div>
     </aside>

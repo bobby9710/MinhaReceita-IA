@@ -27,19 +27,19 @@ export default function ShoppingListPage() {
     <PageLayout>
       <div className="max-w-3xl mx-auto">
         <header className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-display font-bold">Shopping List</h1>
+          <h1 className="text-3xl font-display font-bold">Lista de Compras</h1>
           <button 
-            onClick={() => { if(confirm("Clear entire list?")) clearList.mutate() }}
+            onClick={() => { if(confirm("Limpar toda a lista?")) clearList.mutate() }}
             className="text-muted-foreground hover:text-destructive text-sm font-medium transition-colors"
           >
-            Clear List
+            Limpar Lista
           </button>
         </header>
 
         <form onSubmit={handleAdd} className="flex gap-2 mb-8">
           <input 
             type="text"
-            placeholder="Add new item..."
+            placeholder="Adicionar novo item..."
             className="flex-1 px-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             value={newItemName}
             onChange={(e) => setNewItemName(e.target.value)}
@@ -53,7 +53,7 @@ export default function ShoppingListPage() {
           {/* Pending */}
           <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
             <div className="bg-accent/30 px-6 py-3 border-b border-border flex items-center justify-between">
-              <h2 className="font-bold text-lg">To Buy ({pendingItems.length})</h2>
+              <h2 className="font-bold text-lg">Para Comprar ({pendingItems.length})</h2>
               <ShoppingCart className="w-5 h-5 text-accent-foreground/50" />
             </div>
             <div className="divide-y divide-border">
@@ -77,7 +77,7 @@ export default function ShoppingListPage() {
               ))}
               {pendingItems.length === 0 && (
                 <div className="p-8 text-center text-muted-foreground">
-                  Your cart is empty! Time to plan some meals?
+                  Seu carrinho está vazio! Hora de planejar algumas refeições?
                 </div>
               )}
             </div>
@@ -86,7 +86,7 @@ export default function ShoppingListPage() {
           {/* Bought */}
           {boughtItems.length > 0 && (
             <div className="opacity-60">
-              <h2 className="font-bold text-lg mb-3 px-2">Completed</h2>
+              <h2 className="font-bold text-lg mb-3 px-2">Comprado</h2>
               <div className="bg-card rounded-2xl border border-border divide-y divide-border">
                 {boughtItems.map(item => (
                   <div key={item.id} className="flex items-center p-4 bg-muted/20">

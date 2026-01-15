@@ -21,9 +21,9 @@ export default function Dashboard() {
     <PageLayout>
       <header className="mb-10">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2">
-          Bon Appétit, {user?.firstName}! 👩‍🍳
+          Bom Apetite, {user?.firstName}! 👩‍🍳
         </h1>
-        <p className="text-muted-foreground">Here's what's happening in your kitchen today.</p>
+        <p className="text-muted-foreground">Aqui está o que está acontecendo na sua cozinha hoje.</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
@@ -34,7 +34,7 @@ export default function Dashboard() {
               <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
                 <Calendar className="w-6 h-6 text-white" />
               </div>
-              <h2 className="text-xl font-bold">Today's Menu</h2>
+              <h2 className="text-xl font-bold">Menu de Hoje</h2>
             </div>
             
             {mealPlans && mealPlans.length > 0 ? (
@@ -55,10 +55,10 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/10 text-center">
-                <p className="opacity-90 mb-4">No meals planned for today.</p>
+                <p className="opacity-90 mb-4">Nenhuma refeição planejada para hoje.</p>
                 <Link href="/meal-planner">
                   <button className="bg-white text-primary px-6 py-2 rounded-full font-bold text-sm hover:bg-white/90 transition-colors">
-                    Plan Meals
+                    Planejar Refeições
                   </button>
                 </Link>
               </div>
@@ -73,12 +73,12 @@ export default function Dashboard() {
           <div className="bg-card rounded-2xl p-6 border border-border shadow-sm">
             <div className="flex items-center gap-3 text-emerald-600 mb-2">
               <ShoppingBag className="w-5 h-5" />
-              <span className="font-bold">Shopping List</span>
+              <span className="font-bold">Lista de Compras</span>
             </div>
-            <p className="text-muted-foreground text-sm mb-4">Don't forget to check what you need for this week.</p>
+            <p className="text-muted-foreground text-sm mb-4">Não esqueça de verificar o que você precisa para esta semana.</p>
             <Link href="/shopping-list">
               <button className="w-full py-2 rounded-lg border-2 border-emerald-100 text-emerald-700 font-semibold hover:bg-emerald-50 transition-colors text-sm">
-                View List
+                Ver Lista
               </button>
             </Link>
           </div>
@@ -86,7 +86,7 @@ export default function Dashboard() {
           <div className="bg-card rounded-2xl p-6 border border-border shadow-sm">
             <div className="flex items-center gap-3 text-blue-600 mb-2">
               <TrendingUp className="w-5 h-5" />
-              <span className="font-bold">Total Recipes</span>
+              <span className="font-bold">Total de Receitas</span>
             </div>
             <p className="text-3xl font-bold text-foreground">{recipes?.length || 0}</p>
           </div>
@@ -94,8 +94,8 @@ export default function Dashboard() {
       </div>
 
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-display font-bold">Recently Added</h2>
-        <Link href="/recipes" className="text-primary font-semibold hover:underline">View All</Link>
+        <h2 className="text-2xl font-display font-bold">Adicionadas Recentemente</h2>
+        <Link href="/recipes" className="text-primary font-semibold hover:underline">Ver Todas</Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

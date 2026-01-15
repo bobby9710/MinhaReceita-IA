@@ -14,11 +14,11 @@ export default function RecipeDetailPage() {
   const deleteRecipe = useDeleteRecipe();
   const addIngredients = useAddFromRecipe();
 
-  if (isLoading) return <PageLayout><div>Loading...</div></PageLayout>;
-  if (!recipe) return <PageLayout><div>Recipe not found</div></PageLayout>;
+  if (isLoading) return <PageLayout><div>Carregando...</div></PageLayout>;
+  if (!recipe) return <PageLayout><div>Receita não encontrada</div></PageLayout>;
 
   const handleDelete = async () => {
-    if (confirm("Are you sure you want to delete this recipe?")) {
+    if (confirm("Tem certeza que deseja excluir esta receita?")) {
       await deleteRecipe.mutateAsync(id);
       setLocation("/recipes");
     }
@@ -29,7 +29,7 @@ export default function RecipeDetailPage() {
       <div className="mb-8">
         <Link href="/recipes" className="inline-flex items-center text-muted-foreground hover:text-primary transition-colors mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Recipes
+          Voltar para Receitas
         </Link>
       </div>
 
@@ -49,7 +49,7 @@ export default function RecipeDetailPage() {
           <div className="flex gap-4">
             <Link href={`/recipes/${id}/edit`} className="flex-1">
               <button className="w-full py-3 rounded-xl border-2 border-border font-semibold hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2">
-                <Edit className="w-4 h-4" /> Edit Recipe
+                <Edit className="w-4 h-4" /> Editar Receita
               </button>
             </Link>
             <button 
@@ -61,18 +61,18 @@ export default function RecipeDetailPage() {
           </div>
 
           <div className="bg-card rounded-2xl p-6 border border-border space-y-4">
-            <h3 className="font-display font-bold text-lg">Quick Actions</h3>
+            <h3 className="font-display font-bold text-lg">Ações Rápidas</h3>
             <div className="grid gap-3">
               <button 
                 onClick={() => addIngredients.mutate(id)}
                 disabled={addIngredients.isPending}
                 className="w-full py-3 bg-emerald-50 text-emerald-700 rounded-xl font-semibold hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2"
               >
-                <ShoppingCart className="w-4 h-4" /> Add to Shopping List
+                <ShoppingCart className="w-4 h-4" /> Adicionar à Lista de Compras
               </button>
               <Link href="/meal-planner">
                 <button className="w-full py-3 bg-accent text-accent-foreground rounded-xl font-semibold hover:bg-accent/80 transition-colors flex items-center justify-center gap-2">
-                  <CalendarPlus className="w-4 h-4" /> Add to Meal Plan
+                  <CalendarPlus className="w-4 h-4" /> Adicionar ao Plano de Refeições
                 </button>
               </Link>
             </div>
@@ -101,8 +101,8 @@ export default function RecipeDetailPage() {
                 <Clock className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground font-bold uppercase">Prep Time</p>
-                <p className="font-bold">{recipe.prepTime} mins</p>
+                <p className="text-xs text-muted-foreground font-bold uppercase">Tempo de Preparo</p>
+                <p className="font-bold">{recipe.prepTime} min</p>
               </div>
             </div>
           </div>
@@ -110,7 +110,7 @@ export default function RecipeDetailPage() {
           <div className="space-y-8">
             {/* Strict Separation: Ingredients */}
             <div>
-              <h3 className="font-display font-bold text-xl mb-4 text-primary">Ingredients</h3>
+              <h3 className="font-display font-bold text-xl mb-4 text-primary">Ingredientes</h3>
               <ul className="space-y-3">
                 {recipe.ingredients.map((ing, i) => (
                   <li key={i} className="flex items-center p-3 rounded-xl bg-card border border-border">
@@ -125,7 +125,7 @@ export default function RecipeDetailPage() {
             {/* Strict Separation: Spices */}
             {recipe.spices.length > 0 && (
               <div>
-                <h3 className="font-display font-bold text-xl mb-4 text-orange-600">Spices & Seasonings</h3>
+                <h3 className="font-display font-bold text-xl mb-4 text-orange-600">Temperos e Condimentos</h3>
                 <div className="flex flex-wrap gap-2">
                   {recipe.spices.map((spice, i) => (
                     <span key={i} className="px-4 py-2 rounded-lg bg-orange-50 text-orange-800 font-medium border border-orange-100">
@@ -138,7 +138,7 @@ export default function RecipeDetailPage() {
 
             {/* Steps */}
             <div>
-              <h3 className="font-display font-bold text-xl mb-4 text-foreground">Instructions</h3>
+              <h3 className="font-display font-bold text-xl mb-4 text-foreground">Instruções</h3>
               <div className="space-y-6">
                 {recipe.steps.sort((a,b) => a.order - b.order).map((step, i) => (
                   <div key={i} className="flex gap-4 group">

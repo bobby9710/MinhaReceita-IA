@@ -37,7 +37,7 @@ export default function MealPlannerPage() {
   return (
     <PageLayout>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-display font-bold">Meal Planner</h1>
+        <h1 className="text-3xl font-display font-bold">Planejador de Refeições</h1>
         <div className="flex items-center gap-4 bg-card rounded-xl p-1 border border-border">
           <button 
             onClick={() => setCurrentDate(subWeeks(currentDate, 1))}
@@ -46,7 +46,7 @@ export default function MealPlannerPage() {
             <ChevronLeft className="w-5 h-5" />
           </button>
           <span className="font-semibold px-4 min-w-[140px] text-center">
-            {format(start, "MMM d")} - {format(end, "MMM d")}
+            {format(start, "d 'de' MMM")} - {format(end, "d 'de' MMM")}
           </span>
           <button 
             onClick={() => setCurrentDate(addWeeks(currentDate, 1))}
@@ -61,7 +61,7 @@ export default function MealPlannerPage() {
         <div className="min-w-[1000px] grid grid-cols-8 gap-4">
           {/* Header Row */}
           <div className="sticky left-0 bg-background pt-12 font-bold text-muted-foreground text-sm uppercase tracking-wider text-center">
-            Meal
+            Refeição
           </div>
           {days.map(day => (
             <div key={day.toString()} className="text-center pb-4 border-b-2 border-primary/20">
@@ -120,7 +120,7 @@ export default function MealPlannerPage() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add Recipe for {selectedDay && format(selectedDay, "EEEE, MMM d")}</DialogTitle>
+            <DialogTitle>Adicionar Receita para {selectedDay && format(selectedDay, "EEEE, d 'de' MMM")}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4 mt-4">
             {recipes?.map(recipe => (

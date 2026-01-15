@@ -29,10 +29,10 @@ export default function LandingPage() {
           </div>
           
           <h1 className="font-display font-bold text-5xl lg:text-7xl leading-[1.1] mb-6">
-            Cook with <br/> confidence.
+            Cozinhe com <br/> confiança.
           </h1>
           <p className="text-white/80 text-xl font-light max-w-md leading-relaxed">
-            Your intelligent culinary assistant. Import recipes with AI, plan your meals, and shop smarter.
+            Seu assistente culinário inteligente. Importe receitas com IA, planeje suas refeições e compre de forma mais inteligente.
           </p>
         </div>
 
@@ -45,13 +45,13 @@ export default function LandingPage() {
       <div className="lg:w-1/2 flex items-center justify-center p-8 bg-card">
         <div className="w-full max-w-md space-y-8 text-center">
           <div className="space-y-2">
-            <h2 className="font-display font-bold text-3xl text-foreground">Welcome Back</h2>
-            <p className="text-muted-foreground">Sign in to access your cookbook and meal plans.</p>
+            <h2 className="font-display font-bold text-3xl text-foreground">Bem-vindo de volta</h2>
+            <p className="text-muted-foreground">Faça login para acessar seu livro de receitas e planos de refeições.</p>
           </div>
 
           <a href="/api/login">
             <button className="w-full group bg-primary text-primary-foreground py-4 px-6 rounded-2xl font-bold text-lg shadow-xl shadow-primary/20 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3">
-              <span>Continue with Replit</span>
+              <span>Continuar com Replit</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </a>
@@ -59,11 +59,11 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 gap-4 mt-12">
             <div className="p-4 rounded-xl bg-accent/20 border border-accent/30 text-left">
               <span className="block text-2xl mb-1">✨</span>
-              <p className="font-semibold text-sm text-foreground">AI Recipe Import</p>
+              <p className="font-semibold text-sm text-foreground">Importação de Receitas com IA</p>
             </div>
             <div className="p-4 rounded-xl bg-accent/20 border border-accent/30 text-left">
               <span className="block text-2xl mb-1">📅</span>
-              <p className="font-semibold text-sm text-foreground">Smart Meal Planning</p>
+              <p className="font-semibold text-sm text-foreground">Planejamento Inteligente</p>
             </div>
           </div>
         </div>
