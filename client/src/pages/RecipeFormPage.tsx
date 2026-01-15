@@ -28,9 +28,9 @@ export default function RecipeFormPage() {
       title: "",
       description: "",
       prepTime: 30,
-      difficulty: "Media",
-      category: "Almoco",
-      ingredients: [{ name: "", quantity: "", unit: "pc" }],
+      difficulty: "Média",
+      category: "Almoço",
+      ingredients: [{ name: "", quantity: "", unit: "un" }],
       spices: [],
       steps: [{ content: "", order: 1 }],
     }

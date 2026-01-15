@@ -22,7 +22,7 @@ export default function MealPlannerPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("Almoco");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const categories = ["CafeManha", "Almoco", "Jantar", "Sobremesa"];
+  const categories = ["Café da Manhã", "Almoço", "Jantar", "Sobremesa"];
 
   const handleAdd = (recipeId: number) => {
     if (!selectedDay) return;

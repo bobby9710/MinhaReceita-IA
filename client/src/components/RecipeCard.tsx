@@ -8,9 +8,9 @@ interface RecipeCardProps {
 }
 
 const difficultyColor = {
-  Facil: "bg-green-100 text-green-700",
-  Media: "bg-yellow-100 text-yellow-700",
-  Dificil: "bg-red-100 text-red-700",
+  "Fácil": "bg-green-100 text-green-700",
+  "Média": "bg-yellow-100 text-yellow-700",
+  "Difícil": "bg-red-100 text-red-700",
 };
 
 export function RecipeCard({ recipe }: RecipeCardProps) {

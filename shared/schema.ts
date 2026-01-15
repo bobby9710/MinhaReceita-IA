@@ -8,8 +8,8 @@ export * from "./models/auth";
 export * from "./models/chat";
 
 // Enums
-export const difficultyEnum = pgEnum("difficulty", ["Facil", "Media", "Dificil"]);
-export const categoryEnum = pgEnum("category", ["CafeManha", "CafeTarde", "Almoco", "Jantar", "Sobremesa", "Outros"]);
+export const difficultyEnum = pgEnum("difficulty", ["Fácil", "Média", "Difícil"]);
+export const categoryEnum = pgEnum("category", ["Café da Manhã", "Almoço", "Jantar", "Sobremesa", "Lanche", "Outros"]);
 
 // Recipes Table
 export const recipes = pgTable("recipes", {
