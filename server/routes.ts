@@ -223,7 +223,7 @@ export async function registerRoutes(
         const imageResponse = await openai.images.generate({
           model: "gpt-image-1",
           prompt: `Professional food photography of ${recipeData.title}. High quality, delicious, studio lighting.`,
-          size: "512x512",
+          size: "1024x1024",
         });
         recipeData.imageUrl = imageResponse.data[0].url;
       } catch (e) {
@@ -245,11 +245,12 @@ export async function registerRoutes(
       const response = await openai.images.generate({
         model: "gpt-image-1",
         prompt: `Professional food photography of ${title}. High quality, delicious, studio lighting.`,
-        size: "512x512",
+        size: "1024x1024",
       });
       res.json({ imageUrl: response.data[0].url });
-    } catch (e) {
-      res.status(500).json({ message: "Failed to generate image" });
+    } catch (e: any) {
+      console.error("Image generation error:", e);
+      res.status(500).json({ message: e.message || "Failed to generate image" });
     }
   });
 
