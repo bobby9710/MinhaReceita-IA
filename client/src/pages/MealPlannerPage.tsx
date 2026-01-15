@@ -72,7 +72,7 @@ export default function MealPlannerPage() {
 
           {/* Meal Rows */}
           {categories.map(category => (
-            <>
+            <React.Fragment key={category}>
               <div className="sticky left-0 flex items-center justify-center font-bold text-sm text-foreground bg-accent/30 rounded-lg h-32">
                 {category}
               </div>
@@ -112,7 +112,7 @@ export default function MealPlannerPage() {
                   </div>
                 );
               })}
-            </>
+            </React.Fragment>
           ))}
         </div>
       </div>
