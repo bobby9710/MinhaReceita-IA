@@ -115,6 +115,9 @@ export const insertStepSchema = createInsertSchema(steps).omit({ id: true, recip
 export const insertMealPlanSchema = createInsertSchema(mealPlans).omit({ id: true, userId: true });
 export const insertShoppingItemSchema = createInsertSchema(shoppingList).omit({ id: true, userId: true });
 
+export type InsertMealPlan = z.infer<typeof insertMealPlanSchema>;
+export type InsertShoppingItem = z.infer<typeof insertShoppingItemSchema>;
+
 // Composite Types for API
 export const recipeWithDetailsSchema = insertRecipeSchema.extend({
   ingredients: z.array(insertIngredientSchema),
