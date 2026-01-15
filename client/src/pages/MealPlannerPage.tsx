@@ -19,7 +19,7 @@ export default function MealPlannerPage() {
   const deletePlan = useDeleteMealPlan();
 
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>("Almoco");
+  const [selectedCategory, setSelectedCategory] = useState<string>("Almoço");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const categories = ["Café da Manhã", "Almoço", "Jantar", "Sobremesa"];
