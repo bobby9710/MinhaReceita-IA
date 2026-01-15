@@ -2,7 +2,7 @@ import { PageLayout } from "@/components/PageLayout";
 import { useMealPlans, useCreateMealPlan, useDeleteMealPlan } from "@/hooks/use-meal-plans";
 import { useRecipes } from "@/hooks/use-recipes";
 import { startOfWeek, endOfWeek, eachDayOfInterval, format, addWeeks, subWeeks } from "date-fns";
-import { useState } from "react";
+import React, { useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
