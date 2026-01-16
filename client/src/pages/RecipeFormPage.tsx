@@ -159,13 +159,13 @@ export default function RecipeFormPage() {
 
               <div className="space-y-2 md:col-span-2">
                 <label className="text-sm font-semibold">URL da Imagem</label>
-                <div className="flex gap-2">
-                  <input {...form.register("imageUrl")} className="flex-1 px-4 py-2 rounded-xl border border-border bg-background" placeholder="https://..." />
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input {...form.register("imageUrl")} className="flex-1 px-4 py-2 rounded-xl border border-border bg-background min-w-0" placeholder="https://..." />
                   <button 
                     type="button" 
                     onClick={handleGenerateImage}
                     disabled={generateImage.isPending}
-                    className="px-4 py-2 bg-accent text-accent-foreground rounded-xl font-bold text-sm hover:bg-accent/80 flex items-center gap-2"
+                    className="w-full sm:w-auto px-4 py-2 bg-accent text-accent-foreground rounded-xl font-bold text-sm hover:bg-accent/80 flex items-center justify-center gap-2 whitespace-nowrap"
                   >
                     {generateImage.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
                     Gerar Imagem com IA
@@ -176,21 +176,21 @@ export default function RecipeFormPage() {
           </section>
 
           {/* Ingredients - Strict Separation */}
-          <section className="bg-card rounded-2xl p-6 border border-border space-y-4">
-            <div className="flex items-center justify-between border-b border-border pb-2">
-              <h3 className="font-display font-bold text-lg text-primary">Ingredientes</h3>
-              <button type="button" onClick={() => appendIng({ name: "", quantity: "", unit: "un" })} className="text-sm text-primary font-bold hover:underline flex items-center gap-1">
+          <section className="bg-card rounded-2xl p-4 sm:p-6 border border-border space-y-4 overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border pb-2 gap-2">
+              <h3 className="font-display font-bold text-lg text-primary truncate">Ingredientes</h3>
+              <button type="button" onClick={() => appendIng({ name: "", quantity: "", unit: "un" })} className="text-xs sm:text-sm text-primary font-bold hover:underline flex items-center gap-1 flex-shrink-0">
                 <Plus className="w-4 h-4" /> Adicionar Ingrediente
               </button>
             </div>
             
             <div className="space-y-3">
               {ingredients.map((field, index) => (
-                <div key={field.id} className="flex gap-3">
-                  <input {...form.register(`ingredients.${index}.quantity`)} placeholder="Qtd" className="w-20 px-3 py-2 rounded-lg border border-border" />
-                  <input {...form.register(`ingredients.${index}.unit`)} placeholder="Unid" className="w-20 px-3 py-2 rounded-lg border border-border" />
-                  <input {...form.register(`ingredients.${index}.name`)} placeholder="Nome" className="flex-1 px-3 py-2 rounded-lg border border-border" />
-                  <button type="button" onClick={() => removeIng(index)} className="p-2 text-destructive/50 hover:text-destructive">
+                <div key={field.id} className="flex flex-wrap sm:flex-nowrap gap-2 sm:gap-3 items-center">
+                  <input {...form.register(`ingredients.${index}.quantity`)} placeholder="Qtd" className="w-[60px] sm:w-20 px-3 py-2 rounded-lg border border-border" />
+                  <input {...form.register(`ingredients.${index}.unit`)} placeholder="Unid" className="w-[60px] sm:w-20 px-3 py-2 rounded-lg border border-border" />
+                  <input {...form.register(`ingredients.${index}.name`)} placeholder="Nome" className="flex-1 min-w-[120px] px-3 py-2 rounded-lg border border-border" />
+                  <button type="button" onClick={() => removeIng(index)} className="p-2 text-destructive/50 hover:text-destructive flex-shrink-0">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -199,20 +199,20 @@ export default function RecipeFormPage() {
           </section>
 
           {/* Spices - Strict Separation */}
-          <section className="bg-card rounded-2xl p-6 border border-border space-y-4">
-            <div className="flex items-center justify-between border-b border-border pb-2">
-              <h3 className="font-display font-bold text-lg text-orange-600">Temperos e Condimentos</h3>
-              <button type="button" onClick={() => appendSpice({ name: "", quantity: "" })} className="text-sm text-orange-600 font-bold hover:underline flex items-center gap-1">
+          <section className="bg-card rounded-2xl p-4 sm:p-6 border border-border space-y-4 overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border pb-2 gap-2">
+              <h3 className="font-display font-bold text-lg text-orange-600 truncate">Temperos e Condimentos</h3>
+              <button type="button" onClick={() => appendSpice({ name: "", quantity: "" })} className="text-xs sm:text-sm text-orange-600 font-bold hover:underline flex items-center gap-1 flex-shrink-0">
                 <Plus className="w-4 h-4" /> Adicionar Tempero
               </button>
             </div>
             
             <div className="space-y-3">
               {spices.map((field, index) => (
-                <div key={field.id} className="flex gap-3">
-                  <input {...form.register(`spices.${index}.quantity`)} placeholder="Qtd (opc)" className="w-24 px-3 py-2 rounded-lg border border-border" />
-                  <input {...form.register(`spices.${index}.name`)} placeholder="Nome do Tempero" className="flex-1 px-3 py-2 rounded-lg border border-border" />
-                  <button type="button" onClick={() => removeSpice(index)} className="p-2 text-destructive/50 hover:text-destructive">
+                <div key={field.id} className="flex flex-wrap sm:flex-nowrap gap-2 sm:gap-3 items-center">
+                  <input {...form.register(`spices.${index}.quantity`)} placeholder="Qtd (opc)" className="w-full sm:w-24 px-3 py-2 rounded-lg border border-border" />
+                  <input {...form.register(`spices.${index}.name`)} placeholder="Nome do Tempero" className="flex-1 min-w-[150px] px-3 py-2 rounded-lg border border-border" />
+                  <button type="button" onClick={() => removeSpice(index)} className="p-2 text-destructive/50 hover:text-destructive flex-shrink-0">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
