@@ -18,9 +18,9 @@ export function PageLayout({ children }: { children: React.ReactNode }) {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
       <Sidebar />
-      <main className="flex-1 ml-64 p-8 lg:p-12 overflow-y-auto">
+      <main className="flex-1 pt-16 lg:pt-0 lg:ml-64 p-4 sm:p-8 lg:p-12 overflow-y-auto w-full">
         <div className="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
           {children}
         </div>
