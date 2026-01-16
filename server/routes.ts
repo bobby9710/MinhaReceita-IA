@@ -247,6 +247,7 @@ export async function registerRoutes(
         prompt: `Professional food photography of ${title}. High quality, delicious, studio lighting.`,
         size: "1024x1024",
       });
+      console.log("Image generation response:", JSON.stringify(response.data[0]));
       res.json({ imageUrl: response.data[0].url });
     } catch (e: any) {
       console.error("Image generation error:", e);
