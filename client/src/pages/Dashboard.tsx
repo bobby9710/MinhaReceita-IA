@@ -6,6 +6,7 @@ import { RecipeCard } from "@/components/RecipeCard";
 import { format, startOfDay, endOfDay } from "date-fns";
 import { Calendar, ShoppingBag, TrendingUp } from "lucide-react";
 import { Link } from "wouter";
+import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -41,12 +42,33 @@ export default function Dashboard() {
               <div className="grid gap-4">
                 {mealPlans.map(plan => (
                   <Link href={`/recipes/${plan.recipeId}`} key={plan.id}>
-                    <div className="bg-white/10 hover:bg-white/20 transition-colors backdrop-blur-sm p-4 rounded-xl flex items-center justify-between cursor-pointer border border-white/10">
-                      <div>
-                        <span className="text-xs font-bold uppercase tracking-wider opacity-70 mb-1 block">{plan.category}</span>
-                        <span className="font-bold text-lg">{plan.recipe.title}</span>
+                    <div className="bg-white/10 hover:bg-white/20 transition-colors backdrop-blur-sm p-3 rounded-2xl flex gap-4 cursor-pointer border border-white/10 group">
+                      {plan.recipe.imageUrl ? (
+                        <img 
+                          src={plan.recipe.imageUrl} 
+                          alt={plan.recipe.title}
+                          className="w-16 h-16 rounded-xl object-cover flex-shrink-0 border border-white/20"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                          <Calendar className="w-6 h-6 text-white/40" />
+                        </div>
+                      )}
+                      <div className="flex-1 flex flex-col justify-center gap-1 overflow-hidden">
+                        <div className="flex items-center gap-2">
+                          <span className={cn(
+                            "text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border border-white/20 backdrop-blur-md",
+                            plan.category === "Café da Manhã" && "bg-pink-500/30 text-white",
+                            plan.category === "Almoço" && "bg-orange-500/30 text-white",
+                            plan.category === "Jantar" && "bg-blue-500/30 text-white",
+                            plan.category === "Sobremesa" && "bg-purple-500/30 text-white"
+                          )}>
+                            {plan.category}
+                          </span>
+                        </div>
+                        <span className="font-bold text-base leading-tight text-white line-clamp-1 group-hover:underline">{plan.recipe.title}</span>
                       </div>
-                      <div className="bg-white text-primary px-3 py-1 rounded-full text-xs font-bold">
+                      <div className="self-center bg-white/20 text-white px-2 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap backdrop-blur-sm">
                         {plan.recipe.prepTime} min
                       </div>
                     </div>
