@@ -2,20 +2,43 @@ import { PageLayout } from "@/components/PageLayout";
 import { useRecipe, useDeleteRecipe } from "@/hooks/use-recipes";
 import { useAddShoppingItem, useAddFromRecipe } from "@/hooks/use-shopping-list";
 import { useRoute, Link, useLocation } from "wouter";
-import { Clock, Users, ArrowLeft, Trash2, Edit, ShoppingCart, CalendarPlus, ChefHat } from "lucide-react";
+import { Clock, Users, ArrowLeft, Trash2, Edit, ShoppingCart, CalendarPlus, ChefHat, ExternalLink, Plus } from "lucide-react";
 import { format } from "date-fns";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function RecipeDetailPage() {
   const [, params] = useRoute("/recipes/:id");
   const id = parseInt(params?.id || "0");
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
   
   const { data: recipe, isLoading } = useRecipe(id);
   const deleteRecipe = useDeleteRecipe();
   const addIngredients = useAddFromRecipe();
+  const addSingleIngredient = useAddShoppingItem();
+
+  const [quantities, setQuantities] = useState<Record<number, string>>({});
 
   if (isLoading) return <PageLayout><div>Carregando...</div></PageLayout>;
   if (!recipe) return <PageLayout><div>Receita não encontrada</div></PageLayout>;
+
+  const handleAddIndividual = (ing: any, index: number) => {
+    const qty = quantities[index] || ing.quantity;
+    addSingleIngredient.mutate({
+      name: ing.name,
+      quantity: qty,
+      unit: ing.unit,
+      recipeId: id
+    }, {
+      onSuccess: () => {
+        toast({
+          title: "Adicionado!",
+          description: `${ing.name} adicionado à lista de compras.`
+        });
+      }
+    });
+  };
 
   const handleDelete = async () => {
     if (confirm("Tem certeza que deseja excluir esta receita?")) {
@@ -105,6 +128,17 @@ export default function RecipeDetailPage() {
                 <p className="font-bold">{recipe.prepTime} min</p>
               </div>
             </div>
+            {recipe.sourceUrl && (
+              <a 
+                href={recipe.sourceUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-accent/50 text-accent-foreground rounded-xl hover:bg-accent transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span className="font-bold">Ver Receita Original</span>
+              </a>
+            )}
           </div>
 
           <div className="space-y-8">
@@ -113,10 +147,23 @@ export default function RecipeDetailPage() {
               <h3 className="font-display font-bold text-xl mb-4 text-primary">Ingredientes</h3>
               <ul className="space-y-3">
                 {recipe.ingredients.map((ing, i) => (
-                  <li key={i} className="flex items-center p-3 rounded-xl bg-card border border-border">
+                  <li key={i} className="flex items-center p-3 rounded-xl bg-card border border-border group/ing">
                     <div className="w-2 h-2 rounded-full bg-primary mr-4" />
-                    <span className="font-bold w-24 text-right mr-4 text-foreground/80">{ing.quantity} {ing.unit}</span>
-                    <span className="font-medium text-foreground">{ing.name}</span>
+                    <input 
+                      type="text" 
+                      className="w-16 bg-transparent border-b border-transparent focus:border-primary text-right mr-1 font-bold outline-none"
+                      value={quantities[i] !== undefined ? quantities[i] : ing.quantity}
+                      onChange={(e) => setQuantities(prev => ({ ...prev, [i]: e.target.value }))}
+                    />
+                    <span className="font-bold mr-4 text-foreground/80">{ing.unit}</span>
+                    <span className="font-medium text-foreground flex-1">{ing.name}</span>
+                    <button 
+                      onClick={() => handleAddIndividual(ing, i)}
+                      className="p-2 rounded-lg hover:bg-primary/10 text-primary opacity-0 group-hover/ing:opacity-100 transition-all"
+                      title="Adicionar item individual"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
                   </li>
                 ))}
               </ul>

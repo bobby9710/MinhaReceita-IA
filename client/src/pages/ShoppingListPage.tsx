@@ -1,7 +1,7 @@
 import { PageLayout } from "@/components/PageLayout";
 import { useShoppingList, useAddShoppingItem, useUpdateShoppingItem, useDeleteShoppingItem, useClearShoppingList } from "@/hooks/use-shopping-list";
 import { useState } from "react";
-import { Plus, Trash2, Check, ShoppingCart } from "lucide-react";
+import { Plus, Trash2, Check, ShoppingCart, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function ShoppingListPage() {
@@ -12,12 +12,30 @@ export default function ShoppingListPage() {
   const clearList = useClearShoppingList();
 
   const [newItemName, setNewItemName] = useState("");
+  const [newItemQty, setNewItemQty] = useState("1");
+  const [newItemUnit, setNewItemUnit] = useState("un");
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItemName.trim()) return;
-    addItem.mutate({ name: newItemName, quantity: "1", unit: "pc" });
+    addItem.mutate({ name: newItemName, quantity: newItemQty, unit: newItemUnit });
     setNewItemName("");
+    setNewItemQty("1");
+    setNewItemUnit("un");
+  };
+
+  const shareOnWhatsApp = () => {
+    if (!items || items.length === 0) return;
+    const pending = items.filter(i => !i.isBought);
+    if (pending.length === 0) return;
+
+    let text = "*Minha Lista de Compras - MinhaReceita*\n\n";
+    pending.forEach(item => {
+      text += `• ${item.name}: ${item.quantity} ${item.unit}\n`;
+    });
+
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
   };
 
   const pendingItems = items?.filter(i => !i.isBought) || [];
@@ -28,23 +46,47 @@ export default function ShoppingListPage() {
       <div className="max-w-3xl mx-auto">
         <header className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-display font-bold">Lista de Compras</h1>
-          <button 
-            onClick={() => { if(confirm("Limpar toda a lista?")) clearList.mutate() }}
-            className="text-muted-foreground hover:text-destructive text-sm font-medium transition-colors"
-          >
-            Limpar Lista
-          </button>
+          <div className="flex gap-4">
+            <button 
+              onClick={shareOnWhatsApp}
+              className="flex items-center gap-2 bg-emerald-500 text-white px-4 py-2 rounded-xl font-bold hover:bg-emerald-600 transition-colors shadow-sm"
+            >
+              <Share2 className="w-4 h-4" /> Compartilhar
+            </button>
+            <button 
+              onClick={() => { if(confirm("Limpar toda a lista?")) clearList.mutate() }}
+              className="text-muted-foreground hover:text-destructive text-sm font-medium transition-colors"
+            >
+              Limpar Lista
+            </button>
+          </div>
         </header>
 
-        <form onSubmit={handleAdd} className="flex gap-2 mb-8">
+        <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3 mb-8 bg-card p-4 rounded-2xl border border-border shadow-sm">
           <input 
             type="text"
-            placeholder="Adicionar novo item..."
-            className="flex-1 px-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            placeholder="Nome do item..."
+            className="flex-[2] px-4 py-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             value={newItemName}
             onChange={(e) => setNewItemName(e.target.value)}
           />
-          <button type="submit" className="bg-primary text-primary-foreground px-6 rounded-xl font-bold hover:bg-primary/90 transition-colors">
+          <div className="flex flex-1 gap-2">
+            <input 
+              type="text"
+              placeholder="Qtd"
+              className="w-20 px-4 py-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              value={newItemQty}
+              onChange={(e) => setNewItemQty(e.target.value)}
+            />
+            <input 
+              type="text"
+              placeholder="Un"
+              className="w-20 px-4 py-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              value={newItemUnit}
+              onChange={(e) => setNewItemUnit(e.target.value)}
+            />
+          </div>
+          <button type="submit" className="bg-primary text-primary-foreground px-6 py-3 rounded-xl font-bold hover:bg-primary/90 transition-colors flex items-center justify-center">
             <Plus className="w-5 h-5" />
           </button>
         </form>
