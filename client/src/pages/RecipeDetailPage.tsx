@@ -154,14 +154,11 @@ export default function RecipeDetailPage() {
                       <div className="p-2 bg-primary/10 rounded-lg text-primary mr-4">
                         <Icon className="w-5 h-5" />
                       </div>
-                      <input 
-                        type="text" 
-                        className="w-16 bg-transparent border-b border-transparent focus:border-primary text-right mr-1 font-bold outline-none"
-                        value={quantities[i] !== undefined ? quantities[i] : ing.quantity}
-                        onChange={(e) => setQuantities(prev => ({ ...prev, [i]: e.target.value }))}
-                      />
-                      <span className="font-bold mr-4 text-foreground/80">{ing.unit}</span>
-                      <span className="font-medium text-foreground flex-1">{ing.name}</span>
+                      <div className="flex-1 flex items-center">
+                        <span className="font-bold mr-1 text-foreground/80">{ing.quantity}</span>
+                        <span className="font-bold mr-4 text-foreground/80">{ing.unit}</span>
+                        <span className="font-medium text-foreground flex-1">{ing.name}</span>
+                      </div>
                       <button 
                         onClick={() => handleAddIndividual(ing, i)}
                         className="p-2 rounded-lg hover:bg-primary/10 text-primary opacity-0 group-hover/ing:opacity-100 transition-all"
