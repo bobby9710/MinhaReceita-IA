@@ -38,7 +38,12 @@ export default function RecipeFormPage() {
 
   useEffect(() => {
     if (existingRecipe) {
-      form.reset(existingRecipe);
+      form.reset({
+        ...existingRecipe,
+        ingredients: existingRecipe.ingredients || [],
+        spices: existingRecipe.spices || [],
+        steps: existingRecipe.steps || []
+      });
     }
   }, [existingRecipe, form]);
 
