@@ -2,10 +2,11 @@ import { PageLayout } from "@/components/PageLayout";
 import { useRecipe, useDeleteRecipe } from "@/hooks/use-recipes";
 import { useAddShoppingItem, useAddFromRecipe } from "@/hooks/use-shopping-list";
 import { useRoute, Link, useLocation } from "wouter";
-import { Clock, Users, ArrowLeft, Trash2, Edit, ShoppingCart, CalendarPlus, ChefHat, ExternalLink, Plus } from "lucide-react";
+import { Clock, Users, ArrowLeft, Trash2, Edit, ShoppingCart, CalendarPlus, ChefHat, ExternalLink, Plus, Utensils } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { getIngredientIcon } from "@/lib/ingredient-icons";
 
 export default function RecipeDetailPage() {
   const [, params] = useRoute("/recipes/:id");
@@ -146,26 +147,31 @@ export default function RecipeDetailPage() {
             <div>
               <h3 className="font-display font-bold text-xl mb-4 text-primary">Ingredientes</h3>
               <ul className="space-y-3">
-                {recipe.ingredients.map((ing, i) => (
-                  <li key={i} className="flex items-center p-3 rounded-xl bg-card border border-border group/ing">
-                    <div className="w-2 h-2 rounded-full bg-primary mr-4" />
-                    <input 
-                      type="text" 
-                      className="w-16 bg-transparent border-b border-transparent focus:border-primary text-right mr-1 font-bold outline-none"
-                      value={quantities[i] !== undefined ? quantities[i] : ing.quantity}
-                      onChange={(e) => setQuantities(prev => ({ ...prev, [i]: e.target.value }))}
-                    />
-                    <span className="font-bold mr-4 text-foreground/80">{ing.unit}</span>
-                    <span className="font-medium text-foreground flex-1">{ing.name}</span>
-                    <button 
-                      onClick={() => handleAddIndividual(ing, i)}
-                      className="p-2 rounded-lg hover:bg-primary/10 text-primary opacity-0 group-hover/ing:opacity-100 transition-all"
-                      title="Adicionar item individual"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </li>
-                ))}
+                {recipe.ingredients.map((ing, i) => {
+                  const Icon = getIngredientIcon(ing.name);
+                  return (
+                    <li key={i} className="flex items-center p-3 rounded-xl bg-card border border-border group/ing">
+                      <div className="p-2 bg-primary/10 rounded-lg text-primary mr-4">
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <input 
+                        type="text" 
+                        className="w-16 bg-transparent border-b border-transparent focus:border-primary text-right mr-1 font-bold outline-none"
+                        value={quantities[i] !== undefined ? quantities[i] : ing.quantity}
+                        onChange={(e) => setQuantities(prev => ({ ...prev, [i]: e.target.value }))}
+                      />
+                      <span className="font-bold mr-4 text-foreground/80">{ing.unit}</span>
+                      <span className="font-medium text-foreground flex-1">{ing.name}</span>
+                      <button 
+                        onClick={() => handleAddIndividual(ing, i)}
+                        className="p-2 rounded-lg hover:bg-primary/10 text-primary opacity-0 group-hover/ing:opacity-100 transition-all"
+                        title="Adicionar item individual"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
 
@@ -174,11 +180,15 @@ export default function RecipeDetailPage() {
               <div>
                 <h3 className="font-display font-bold text-xl mb-4 text-orange-600">Temperos e Condimentos</h3>
                 <div className="flex flex-wrap gap-2">
-                  {recipe.spices.map((spice, i) => (
-                    <span key={i} className="px-4 py-2 rounded-lg bg-orange-50 text-orange-800 font-medium border border-orange-100">
-                      {spice.quantity ? `${spice.quantity} ` : ''}{spice.name}
-                    </span>
-                  ))}
+                  {recipe.spices.map((spice, i) => {
+                    const Icon = getIngredientIcon(spice.name);
+                    return (
+                      <span key={i} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-50 text-orange-800 font-medium border border-orange-100">
+                        <Icon className="w-4 h-4" />
+                        {spice.quantity ? `${spice.quantity} ` : ''}{spice.name}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             )}

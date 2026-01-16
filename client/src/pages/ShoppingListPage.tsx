@@ -1,8 +1,9 @@
 import { PageLayout } from "@/components/PageLayout";
 import { useShoppingList, useAddShoppingItem, useUpdateShoppingItem, useDeleteShoppingItem, useClearShoppingList } from "@/hooks/use-shopping-list";
 import { useState } from "react";
-import { Plus, Trash2, Check, ShoppingCart, Share2 } from "lucide-react";
+import { Plus, Trash2, Check, ShoppingCart, Share2, Utensils } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getIngredientIcon } from "@/lib/ingredient-icons";
 
 export default function ShoppingListPage() {
   const { data: items, isLoading } = useShoppingList();
@@ -29,10 +30,11 @@ export default function ShoppingListPage() {
     const pending = items.filter(i => !i.isBought);
     if (pending.length === 0) return;
 
-    let text = "*Minha Lista de Compras - MinhaReceita*\n\n";
+    let text = "🛒 *Minha Lista de Compras - MinhaReceita*\n\n";
     pending.forEach(item => {
-      text += `• ${item.name}: ${item.quantity} ${item.unit}\n`;
+      text += `✅ ${item.name}: ${item.quantity} ${item.unit}\n`;
     });
+    text += "\n_Gerado por MinhaReceita_";
 
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
@@ -99,24 +101,30 @@ export default function ShoppingListPage() {
               <ShoppingCart className="w-5 h-5 text-accent-foreground/50" />
             </div>
             <div className="divide-y divide-border">
-              {pendingItems.map(item => (
-                <div key={item.id} className="flex items-center p-4 hover:bg-muted/30 transition-colors group">
-                  <button 
-                    onClick={() => updateItem.mutate({ id: item.id, data: { isBought: true } })}
-                    className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 mr-4 hover:border-primary transition-colors"
-                  />
-                  <div className="flex-1">
-                    <span className="font-medium">{item.name}</span>
-                    <span className="text-sm text-muted-foreground ml-2">{item.quantity} {item.unit}</span>
+              {pendingItems.map(item => {
+                const Icon = getIngredientIcon(item.name);
+                return (
+                  <div key={item.id} className="flex items-center p-4 hover:bg-muted/30 transition-colors group">
+                    <button 
+                      onClick={() => updateItem.mutate({ id: item.id, data: { isBought: true } })}
+                      className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 mr-4 hover:border-primary transition-colors"
+                    />
+                    <div className="p-2 bg-primary/10 rounded-lg text-primary mr-3">
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="font-medium">{item.name}</span>
+                      <span className="text-sm text-muted-foreground ml-2">{item.quantity} {item.unit}</span>
+                    </div>
+                    <button 
+                      onClick={() => deleteItem.mutate(item.id)}
+                      className="text-destructive/50 hover:text-destructive opacity-0 group-hover:opacity-100 transition-all p-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-                  <button 
-                    onClick={() => deleteItem.mutate(item.id)}
-                    className="text-destructive/50 hover:text-destructive opacity-0 group-hover:opacity-100 transition-all p-2"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
+                );
+              })}
               {pendingItems.length === 0 && (
                 <div className="p-8 text-center text-muted-foreground">
                   Seu carrinho está vazio! Hora de planejar algumas refeições?
@@ -130,26 +138,32 @@ export default function ShoppingListPage() {
             <div className="opacity-60">
               <h2 className="font-bold text-lg mb-3 px-2">Comprado</h2>
               <div className="bg-card rounded-2xl border border-border divide-y divide-border">
-                {boughtItems.map(item => (
-                  <div key={item.id} className="flex items-center p-4 bg-muted/20">
-                    <button 
-                      onClick={() => updateItem.mutate({ id: item.id, data: { isBought: false } })}
-                      className="w-6 h-6 rounded-full bg-emerald-500 border-none mr-4 flex items-center justify-center text-white"
-                    >
-                      <Check className="w-3 h-3" />
-                    </button>
-                    <div className="flex-1 line-through text-muted-foreground">
-                      <span className="font-medium">{item.name}</span>
-                      <span className="text-sm ml-2">{item.quantity} {item.unit}</span>
+                {boughtItems.map(item => {
+                  const Icon = getIngredientIcon(item.name);
+                  return (
+                    <div key={item.id} className="flex items-center p-4 bg-muted/20">
+                      <button 
+                        onClick={() => updateItem.mutate({ id: item.id, data: { isBought: false } })}
+                        className="w-6 h-6 rounded-full bg-emerald-500 border-none mr-4 flex items-center justify-center text-white"
+                      >
+                        <Check className="w-3 h-3" />
+                      </button>
+                      <div className="p-2 bg-muted rounded-lg text-muted-foreground mr-3">
+                        <Icon className="w-4 h-4 opacity-50" />
+                      </div>
+                      <div className="flex-1 line-through text-muted-foreground">
+                        <span className="font-medium">{item.name}</span>
+                        <span className="text-sm ml-2">{item.quantity} {item.unit}</span>
+                      </div>
+                      <button 
+                        onClick={() => deleteItem.mutate(item.id)}
+                        className="text-destructive/50 hover:text-destructive transition-colors p-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
-                    <button 
-                      onClick={() => deleteItem.mutate(item.id)}
-                      className="text-destructive/50 hover:text-destructive transition-colors p-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
