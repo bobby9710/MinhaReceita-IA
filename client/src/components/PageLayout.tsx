@@ -20,7 +20,7 @@ export function PageLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
       <Sidebar />
-      <main className="flex-1 pt-16 lg:pt-0 lg:ml-64 p-4 sm:p-8 lg:p-12 overflow-y-auto w-full">
+      <main className="flex-1 pb-20 lg:pb-0 lg:ml-64 p-4 sm:p-8 lg:p-12 overflow-y-auto w-full">
         <div className="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
           {children}
         </div>

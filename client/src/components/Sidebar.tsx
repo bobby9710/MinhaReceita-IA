@@ -84,33 +84,44 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-card border-b border-border flex items-center justify-between px-4 z-[60]">
-        <div className="flex items-center gap-2 text-primary">
-          <ChefHat className="w-6 h-6" />
-          <span className="font-display font-bold text-lg text-foreground">MinhaReceita</span>
-        </div>
-        <button 
-          onClick={() => setIsOpen(!isOpen)}
-          className="p-2 text-foreground hover:bg-accent rounded-lg"
-        >
-          {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+      {/* Mobile Bottom Navigation */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border flex items-center justify-around px-4 z-[60] pb-safe">
+        {navItems.slice(0, 2).map((item) => {
+          const isActive = location === item.href;
+          return (
+            <Link key={item.href} href={item.href} className={cn(
+              "flex flex-col items-center gap-1 p-2 min-w-16 transition-all",
+              isActive ? "text-primary" : "text-muted-foreground"
+            )}>
+              <item.icon className="w-5 h-5" />
+              <span className="text-[10px] font-medium">{item.label}</span>
+            </Link>
+          );
+        })}
+        
+        {/* Main Action Button */}
+        <Link href="/recipes/new" className="relative -top-4">
+          <button className="bg-primary text-primary-foreground rounded-full w-14 h-14 flex items-center justify-center shadow-lg shadow-primary/30 border-4 border-background active:scale-95 transition-transform">
+            <PlusCircle className="w-7 h-7" />
+          </button>
+        </Link>
+
+        {navItems.slice(2).map((item) => {
+          const isActive = location === item.href;
+          return (
+            <Link key={item.href} href={item.href} className={cn(
+              "flex flex-col items-center gap-1 p-2 min-w-16 transition-all",
+              isActive ? "text-primary" : "text-muted-foreground"
+            )}>
+              <item.icon className="w-5 h-5" />
+              <span className="text-[10px] font-medium">{item.label}</span>
+            </Link>
+          );
+        })}
       </div>
 
-      {/* Overlay */}
-      {isOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-[55]"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
-      {/* Sidebar Desktop/Mobile */}
-      <aside className={cn(
-        "fixed left-0 top-0 h-screen w-64 bg-card border-r border-border flex flex-col z-50 transition-transform duration-300 lg:translate-x-0",
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+      {/* Sidebar Desktop */}
+      <aside className="fixed left-0 top-0 h-screen w-64 bg-card border-r border-border hidden lg:flex flex-col z-50">
         {sidebarContent}
       </aside>
     </>
