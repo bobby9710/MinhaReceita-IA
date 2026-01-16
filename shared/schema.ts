@@ -14,7 +14,7 @@ export const categoryEnum = pgEnum("category", ["Café da Manhã", "Almoço", "J
 // Recipes Table
 export const recipes = pgTable("recipes", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull(), // Linked to Auth user.id
+  userId: integer("user_id").notNull(), // Linked to Auth user.id (integer now)
   title: text("title").notNull(),
   description: text("description").notNull(),
   prepTime: integer("prep_time").notNull(), // in minutes
@@ -55,7 +55,7 @@ export const steps = pgTable("steps", {
 // Meal Plans Table
 export const mealPlans = pgTable("meal_plans", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull(),
+  userId: integer("user_id").notNull(),
   date: text("date").notNull(), // YYYY-MM-DD
   category: categoryEnum("category").notNull(),
   recipeId: integer("recipe_id").notNull().references(() => recipes.id, { onDelete: "cascade" }),
@@ -64,7 +64,7 @@ export const mealPlans = pgTable("meal_plans", {
 // Shopping List Table
 export const shoppingList = pgTable("shopping_list", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull(),
+  userId: integer("user_id").notNull(),
   name: text("name").notNull(),
   quantity: text("quantity"),
   unit: text("unit"),
@@ -125,11 +125,6 @@ export const recipeWithDetailsSchema = insertRecipeSchema.extend({
   steps: z.array(insertStepSchema),
 });
 
-export type Recipe = typeof recipes.$inferSelect;
-export type InsertRecipe = z.infer<typeof insertRecipeSchema>;
-export type Ingredient = typeof ingredients.$inferSelect;
-export type Spice = typeof spices.$inferSelect;
-export type Step = typeof steps.$inferSelect;
-export type MealPlan = typeof mealPlans.$inferSelect;
-export type ShoppingItem = typeof shoppingList.$inferSelect;
-export type RecipeWithDetails = z.infer<typeof recipeWithDetailsSchema>;
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
+export type User = typeof users.$inferSelect;
+export type UpsertUser = z.infer<typeof insertUserSchema>;

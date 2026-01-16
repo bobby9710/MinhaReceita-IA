@@ -124,7 +124,7 @@ export async function registerRoutes(
   // === Recipes Routes ===
 
   app.get(api.recipes.list.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = (req.user as any).id;
     const { category, search } = req.query as any;
     const recipes = await storage.getRecipes(userId, category, search);
     res.json(recipes);
@@ -138,7 +138,7 @@ export async function registerRoutes(
 
   app.post(api.recipes.create.path, isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as any).claims.sub;
+      const userId = (req.user as any).id;
       const input = api.recipes.create.input.parse(req.body);
       const recipe = await storage.createRecipe(input, userId);
       res.status(201).json(recipe);
@@ -152,7 +152,7 @@ export async function registerRoutes(
 
   app.put(api.recipes.update.path, isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as any).claims.sub;
+      const userId = (req.user as any).id;
       const input = api.recipes.update.input.parse(req.body);
       const recipe = await storage.updateRecipe(Number(req.params.id), input, userId);
       res.json(recipe);
@@ -165,7 +165,7 @@ export async function registerRoutes(
   });
 
   app.delete(api.recipes.delete.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = (req.user as any).id;
     await storage.deleteRecipe(Number(req.params.id), userId);
     res.status(204).send();
   });
@@ -274,59 +274,59 @@ export async function registerRoutes(
   // === Meal Plans & Shopping List ===
 
   app.get(api.mealPlans.list.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = (req.user as any).id;
     const { startDate, endDate } = req.query as any;
     const plans = await storage.getMealPlans(userId, startDate, endDate);
     res.json(plans);
   });
 
   app.post(api.mealPlans.create.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = (req.user as any).id;
     const input = api.mealPlans.create.input.parse(req.body);
     const plan = await storage.createMealPlan(input, userId);
     res.status(201).json(plan);
   });
 
   app.delete(api.mealPlans.delete.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = (req.user as any).id;
     await storage.deleteMealPlan(Number(req.params.id), userId);
     res.status(204).send();
   });
 
   app.get(api.shoppingList.list.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = (req.user as any).id;
     const items = await storage.getShoppingList(userId);
     res.json(items);
   });
 
   app.post(api.shoppingList.create.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = (req.user as any).id;
     const input = api.shoppingList.create.input.parse(req.body);
     const item = await storage.createShoppingItem(input, userId);
     res.status(201).json(item);
   });
 
   app.put(api.shoppingList.update.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = (req.user as any).id;
     const input = api.shoppingList.update.input.parse(req.body);
     const item = await storage.updateShoppingItem(Number(req.params.id), input, userId);
     res.json(item);
   });
 
   app.delete(api.shoppingList.delete.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = (req.user as any).id;
     await storage.deleteShoppingItem(Number(req.params.id), userId);
     res.status(204).send();
   });
 
   app.post(api.shoppingList.addFromRecipe.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = (req.user as any).id;
     await storage.addIngredientsToShoppingList(Number(req.params.id), userId);
     res.json({ message: "Ingredients added to shopping list" });
   });
 
   app.delete(api.shoppingList.clear.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = (req.user as any).id;
     await storage.clearShoppingList(userId);
     res.status(204).send();
   });

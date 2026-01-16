@@ -9,31 +9,29 @@ import {
 import { eq, and, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
-  // User (from Auth integration handles this, but we might need helpers)
-  
   // Recipes
-  createRecipe(recipe: RecipeWithDetails, userId: string): Promise<Recipe>;
+  createRecipe(recipe: RecipeWithDetails, userId: number): Promise<Recipe>;
   getRecipe(id: number): Promise<(Recipe & { ingredients: any[], spices: any[], steps: any[] }) | undefined>;
-  getRecipes(userId: string, category?: string, search?: string): Promise<Recipe[]>;
-  updateRecipe(id: number, recipe: Partial<RecipeWithDetails>, userId: string): Promise<Recipe>;
-  deleteRecipe(id: number, userId: string): Promise<void>;
+  getRecipes(userId: number, category?: string, search?: string): Promise<Recipe[]>;
+  updateRecipe(id: number, recipe: Partial<RecipeWithDetails>, userId: number): Promise<Recipe>;
+  deleteRecipe(id: number, userId: number): Promise<void>;
 
   // Meal Plans
-  getMealPlans(userId: string, startDate: string, endDate: string): Promise<(MealPlan & { recipe: Recipe })[]>;
-  createMealPlan(plan: InsertMealPlan, userId: string): Promise<MealPlan>;
-  deleteMealPlan(id: number, userId: string): Promise<void>;
+  getMealPlans(userId: number, startDate: string, endDate: string): Promise<(MealPlan & { recipe: Recipe })[]>;
+  createMealPlan(plan: InsertMealPlan, userId: number): Promise<MealPlan>;
+  deleteMealPlan(id: number, userId: number): Promise<void>;
 
   // Shopping List
-  getShoppingList(userId: string): Promise<ShoppingItem[]>;
-  createShoppingItem(item: InsertShoppingItem, userId: string): Promise<ShoppingItem>;
-  updateShoppingItem(id: number, updates: Partial<InsertShoppingItem>, userId: string): Promise<ShoppingItem>;
-  deleteShoppingItem(id: number, userId: string): Promise<void>;
-  clearShoppingList(userId: string): Promise<void>;
-  addIngredientsToShoppingList(recipeId: number, userId: string): Promise<void>;
+  getShoppingList(userId: number): Promise<ShoppingItem[]>;
+  createShoppingItem(item: InsertShoppingItem, userId: number): Promise<ShoppingItem>;
+  updateShoppingItem(id: number, updates: Partial<InsertShoppingItem>, userId: number): Promise<ShoppingItem>;
+  deleteShoppingItem(id: number, userId: number): Promise<void>;
+  clearShoppingList(userId: number): Promise<void>;
+  addIngredientsToShoppingList(recipeId: number, userId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
-  async createRecipe(recipe: RecipeWithDetails, userId: string): Promise<Recipe> {
+  async createRecipe(recipe: RecipeWithDetails, userId: number): Promise<Recipe> {
     return await db.transaction(async (tx) => {
       const [newRecipe] = await tx.insert(recipes).values({
         ...recipe,
@@ -75,7 +73,7 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async getRecipes(userId: string, category?: string, search?: string): Promise<Recipe[]> {
+  async getRecipes(userId: number, category?: string, search?: string): Promise<Recipe[]> {
     let conditions = [eq(recipes.userId, userId)];
     
     if (category) {
@@ -91,7 +89,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(recipes.createdAt));
   }
 
-  async updateRecipe(id: number, updates: Partial<RecipeWithDetails>, userId: string): Promise<Recipe> {
+  async updateRecipe(id: number, updates: Partial<RecipeWithDetails>, userId: number): Promise<Recipe> {
     return await db.transaction(async (tx) => {
       // Verify ownership
       const [existing] = await tx.select().from(recipes).where(and(eq(recipes.id, id), eq(recipes.userId, userId)));
@@ -132,12 +130,12 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async deleteRecipe(id: number, userId: string): Promise<void> {
+  async deleteRecipe(id: number, userId: number): Promise<void> {
     await db.delete(recipes).where(and(eq(recipes.id, id), eq(recipes.userId, userId)));
   }
 
   // Meal Plans
-  async getMealPlans(userId: string, startDate: string, endDate: string): Promise<(MealPlan & { recipe: Recipe })[]> {
+  async getMealPlans(userId: number, startDate: string, endDate: string): Promise<(MealPlan & { recipe: Recipe })[]> {
     return await db.query.mealPlans.findMany({
       where: and(
         eq(mealPlans.userId, userId),
@@ -150,26 +148,26 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async createMealPlan(plan: InsertMealPlan, userId: string): Promise<MealPlan> {
+  async createMealPlan(plan: InsertMealPlan, userId: number): Promise<MealPlan> {
     const [newPlan] = await db.insert(mealPlans).values({ ...plan, userId }).returning();
     return newPlan;
   }
 
-  async deleteMealPlan(id: number, userId: string): Promise<void> {
+  async deleteMealPlan(id: number, userId: number): Promise<void> {
     await db.delete(mealPlans).where(and(eq(mealPlans.id, id), eq(mealPlans.userId, userId)));
   }
 
   // Shopping List
-  async getShoppingList(userId: string): Promise<ShoppingItem[]> {
+  async getShoppingList(userId: number): Promise<ShoppingItem[]> {
     return await db.select().from(shoppingList).where(eq(shoppingList.userId, userId));
   }
 
-  async createShoppingItem(item: InsertShoppingItem, userId: string): Promise<ShoppingItem> {
+  async createShoppingItem(item: InsertShoppingItem, userId: number): Promise<ShoppingItem> {
     const [newItem] = await db.insert(shoppingList).values({ ...item, userId }).returning();
     return newItem;
   }
 
-  async updateShoppingItem(id: number, updates: Partial<InsertShoppingItem>, userId: string): Promise<ShoppingItem> {
+  async updateShoppingItem(id: number, updates: Partial<InsertShoppingItem>, userId: number): Promise<ShoppingItem> {
     const [updated] = await db.update(shoppingList)
       .set(updates)
       .where(and(eq(shoppingList.id, id), eq(shoppingList.userId, userId)))
@@ -177,15 +175,15 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async deleteShoppingItem(id: number, userId: string): Promise<void> {
+  async deleteShoppingItem(id: number, userId: number): Promise<void> {
     await db.delete(shoppingList).where(and(eq(shoppingList.id, id), eq(shoppingList.userId, userId)));
   }
 
-  async clearShoppingList(userId: string): Promise<void> {
+  async clearShoppingList(userId: number): Promise<void> {
     await db.delete(shoppingList).where(eq(shoppingList.userId, userId));
   }
 
-  async addIngredientsToShoppingList(recipeId: number, userId: string): Promise<void> {
+  async addIngredientsToShoppingList(recipeId: number, userId: number): Promise<void> {
     const recipeIngredients = await db.select().from(ingredients).where(eq(ingredients.recipeId, recipeId));
     if (recipeIngredients.length > 0) {
       await db.insert(shoppingList).values(

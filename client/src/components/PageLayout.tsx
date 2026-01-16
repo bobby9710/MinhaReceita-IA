@@ -9,7 +9,7 @@ export function PageLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      setLocation("/"); // Redirect to landing/login
+      setLocation("/auth"); // Redirect to custom login
     }
   }, [user, isLoading, setLocation]);
 
