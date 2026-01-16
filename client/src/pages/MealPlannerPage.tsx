@@ -57,14 +57,14 @@ export default function MealPlannerPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
-        <div className="min-w-[800px] sm:min-w-[1000px] grid grid-cols-8 gap-2 sm:gap-4">
+      <div className="overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
+        <div className="w-max sm:w-full grid grid-cols-8 gap-2 sm:gap-4 pr-4 sm:pr-0">
           {/* Header Row */}
-          <div className="sticky left-0 z-20 bg-background/95 backdrop-blur pt-12 font-bold text-muted-foreground text-[10px] sm:text-sm uppercase tracking-wider text-center border-r border-border/50">
+          <div className="sticky left-0 z-30 bg-background pt-12 font-bold text-muted-foreground text-[10px] sm:text-sm uppercase tracking-wider text-center border-r border-border shadow-[2px_0_5px_-2px_rgba(0,0,0,0,1)] sm:shadow-none min-w-[80px]">
             Refeição
           </div>
           {days.map(day => (
-            <div key={day.toString()} className="text-center pb-4 border-b-2 border-primary/20">
+            <div key={day.toString()} className="text-center pb-4 border-b-2 border-primary/20 min-w-[100px] sm:min-w-0">
               <p className="text-[10px] sm:text-xs font-bold text-primary uppercase mb-1">{format(day, "EEE")}</p>
               <p className="text-lg sm:text-2xl font-display font-bold">{format(day, "d")}</p>
             </div>
@@ -73,7 +73,7 @@ export default function MealPlannerPage() {
           {/* Meal Rows */}
           {categories.map(category => (
             <React.Fragment key={category}>
-              <div className="sticky left-0 z-20 flex items-center justify-center font-bold text-[10px] sm:text-sm text-foreground bg-accent/50 backdrop-blur rounded-lg h-24 sm:h-32 border-r border-border/50 px-1 text-center">
+              <div className="sticky left-0 z-30 flex items-center justify-center font-bold text-[10px] sm:text-sm text-foreground bg-accent/50 backdrop-blur-md rounded-lg h-24 sm:h-32 border-r border-border shadow-[2px_0_5px_-2px_rgba(0,0,0,0,1)] sm:shadow-none px-1 text-center min-w-[80px]">
                 {category}
               </div>
               {days.map(day => {
@@ -81,7 +81,7 @@ export default function MealPlannerPage() {
                 const plan = mealPlans?.find(p => p.date === dayStr && p.category === category);
 
                 return (
-                  <div key={`${dayStr}-${category}`} className="h-24 sm:h-32 bg-card rounded-xl border border-border p-1.5 sm:p-2 relative group hover:border-primary/50 transition-colors shadow-sm">
+                  <div key={`${dayStr}-${category}`} className="h-24 sm:h-32 bg-card rounded-xl border border-border p-1.5 sm:p-2 relative group hover:border-primary/50 transition-colors shadow-sm min-w-[100px] sm:min-w-0">
                     {plan ? (
                       <div className="h-full flex flex-col justify-between overflow-hidden">
                         <div className="overflow-hidden">

@@ -85,25 +85,27 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile Bottom Navigation */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 h-[72px] bg-card/80 backdrop-blur-xl border-t border-border/50 flex items-center justify-around px-2 z-[100] pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0,05)]">
-        {navItems.slice(0, 2).map((item) => {
-          const isActive = location === item.href;
-          return (
-            <Link key={item.href} href={item.href} className={cn(
-              "flex flex-col items-center justify-center gap-1.5 p-2 min-w-[72px] transition-all relative",
-              isActive ? "text-primary" : "text-muted-foreground/60"
-            )}>
-              <item.icon className={cn("w-6 h-6 transition-transform", isActive && "scale-110")} />
-              <span className="text-[11px] font-semibold tracking-tight">{item.label}</span>
-              {isActive && (
-                <span className="absolute -top-px left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full" />
-              )}
-            </Link>
-          );
-        })}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 h-[76px] bg-card border-t border-border flex items-center justify-between px-1 z-[100] pb-safe shadow-[0_-4px_15px_rgba(0,0,0,0,08)]">
+        <div className="flex-1 flex justify-around">
+          {navItems.slice(0, 2).map((item) => {
+            const isActive = location === item.href;
+            return (
+              <Link key={item.href} href={item.href} className={cn(
+                "flex flex-col items-center justify-center gap-1 min-w-[70px] transition-all relative py-2",
+                isActive ? "text-primary" : "text-muted-foreground/60"
+              )}>
+                <item.icon className={cn("w-6 h-6 transition-transform", isActive && "scale-110")} />
+                <span className="text-[10px] font-bold tracking-tight text-center">{item.label}</span>
+                {isActive && (
+                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full" />
+                )}
+              </Link>
+            );
+          })}
+        </div>
         
         {/* Main Action Button */}
-        <div className="relative -top-6 px-2">
+        <div className="relative -top-7 px-1 flex-shrink-0">
           <Link href="/recipes/new">
             <button className="bg-primary text-primary-foreground rounded-2xl w-14 h-14 flex items-center justify-center shadow-[0_8px_20px_-4px_rgba(var(--primary),0.4)] border-4 border-background active:scale-90 transition-all duration-200">
               <PlusCircle className="w-8 h-8" />
@@ -111,21 +113,23 @@ export function Sidebar() {
           </Link>
         </div>
 
-        {navItems.slice(2).map((item) => {
-          const isActive = location === item.href;
-          return (
-            <Link key={item.href} href={item.href} className={cn(
-              "flex flex-col items-center justify-center gap-1.5 p-2 min-w-[72px] transition-all relative",
-              isActive ? "text-primary" : "text-muted-foreground/60"
-            )}>
-              <item.icon className={cn("w-6 h-6 transition-transform", isActive && "scale-110")} />
-              <span className="text-[11px] font-semibold tracking-tight">{item.label}</span>
-              {isActive && (
-                <span className="absolute -top-px left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full" />
-              )}
-            </Link>
-          );
-        })}
+        <div className="flex-1 flex justify-around">
+          {navItems.slice(2).map((item) => {
+            const isActive = location === item.href;
+            return (
+              <Link key={item.href} href={item.href} className={cn(
+                "flex flex-col items-center justify-center gap-1 min-w-[70px] transition-all relative py-2",
+                isActive ? "text-primary" : "text-muted-foreground/60"
+              )}>
+                <item.icon className={cn("w-6 h-6 transition-transform", isActive && "scale-110")} />
+                <span className="text-[10px] font-bold tracking-tight text-center">{item.label}</span>
+                {isActive && (
+                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full" />
+                )}
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       {/* Sidebar Desktop */}
