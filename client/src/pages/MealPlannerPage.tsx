@@ -20,8 +20,9 @@ export default function MealPlannerPage() {
   const deletePlan = useDeleteMealPlan();
 
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>("Almoço");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [step, setStep] = useState<"category" | "recipe">("category");
+  const [tempCategory, setTempCategory] = useState<string>("Almoço");
 
   const categories = ["Café da Manhã", "Almoço", "Jantar", "Sobremesa"];
 
@@ -29,11 +30,13 @@ export default function MealPlannerPage() {
     if (!selectedDay) return;
     createPlan.mutate({
       date: format(selectedDay, "yyyy-MM-dd"),
-      category: selectedCategory as any,
+      category: tempCategory as any,
       recipeId
     });
     setIsModalOpen(false);
   };
+
+  const filteredRecipes = recipes?.filter(r => r.category === tempCategory) || [];
 
   return (
     <PageLayout>
@@ -77,7 +80,7 @@ export default function MealPlannerPage() {
                 <button 
                   onClick={() => {
                     setSelectedDay(day);
-                    setSelectedCategory("Almoço");
+                    setStep("category");
                     setIsModalOpen(true);
                   }}
                   className="p-1 hover:bg-accent rounded-full transition-colors"
@@ -138,26 +141,78 @@ export default function MealPlannerPage() {
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Adicionar Receita para {selectedDay && format(selectedDay, "EEEE, d 'de' MMM")}</DialogTitle>
+        <DialogContent className="max-w-md w-[90%] rounded-2xl p-0 overflow-hidden border-none shadow-2xl">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle className="text-xl font-display font-bold">
+              {step === "category" ? "Escolha a Refeição" : `Receitas de ${tempCategory}`}
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              {selectedDay && format(selectedDay, "EEEE, d 'de' MMM", { locale: ptBR })}
+            </p>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            {recipes?.map(recipe => (
-              <button 
-                key={recipe.id}
-                onClick={() => handleAdd(recipe.id)}
-                className="text-left p-4 rounded-xl border border-border hover:border-primary hover:bg-primary/5 transition-all flex items-center gap-4"
-              >
-                {recipe.imageUrl && (
-                  <img src={recipe.imageUrl} className="w-12 h-12 rounded-lg object-cover" />
+
+          <div className="p-4 space-y-2">
+            {step === "category" ? (
+              <div className="grid gap-2">
+                {categories.map(cat => {
+                  let Icon = Plus;
+                  if (cat === "Café da Manhã") Icon = Plus; // Coffee placeholder if needed
+                  if (cat === "Almoço") Icon = ChevronRight;
+                  
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => {
+                        setTempCategory(cat);
+                        setStep("recipe");
+                      }}
+                      className="w-full flex items-center justify-between p-4 rounded-xl border border-border hover:border-primary hover:bg-primary/5 transition-all group active:scale-[0.98]"
+                    >
+                      <span className="font-bold text-lg">{cat}</span>
+                      <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <button 
+                  onClick={() => setStep("category")}
+                  className="text-sm font-bold text-primary flex items-center gap-1 mb-2 hover:underline"
+                >
+                  <ChevronLeft className="w-4 h-4" /> Voltar para categorias
+                </button>
+                
+                {filteredRecipes.length > 0 ? (
+                  <div className="grid gap-3">
+                    {filteredRecipes.map(recipe => (
+                      <button 
+                        key={recipe.id}
+                        onClick={() => handleAdd(recipe.id)}
+                        className="text-left p-3 rounded-xl border border-border hover:border-primary hover:bg-primary/5 transition-all flex items-center gap-4 active:scale-[0.98]"
+                      >
+                        {recipe.imageUrl ? (
+                          <img src={recipe.imageUrl} className="w-14 h-14 rounded-lg object-cover shadow-sm" />
+                        ) : (
+                          <div className="w-14 h-14 rounded-lg bg-accent flex items-center justify-center">
+                            <Plus className="w-5 h-5 text-muted-foreground/20" />
+                          </div>
+                        )}
+                        <div className="flex-1 overflow-hidden">
+                          <p className="font-bold text-foreground truncate">{recipe.title}</p>
+                          <p className="text-xs text-muted-foreground">{recipe.prepTime} min</p>
+                        </div>
+                        <Plus className="w-5 h-5 text-primary opacity-0 group-hover:opacity-100" />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">Você ainda não tem receitas nesta categoria.</p>
+                  </div>
                 )}
-                <div>
-                  <p className="font-bold text-foreground">{recipe.title}</p>
-                  <p className="text-xs text-muted-foreground">{recipe.prepTime} min</p>
-                </div>
-              </button>
-            ))}
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
