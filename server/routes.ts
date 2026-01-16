@@ -77,7 +77,7 @@ export async function registerRoutes(
          - Spices can have optional quantity but NO unit (e.g., "sal", "pimenta a gosto").
       2. If quantity is missing for Ingredients, infer it. For Spices, use "a gosto" if quantity is null.
       3. Format Step-by-step instructions clearly.
-      4. Suggest a Title, Description, Prep Time (minutes), Difficulty (Facil, Media, Dificil), Category (CafeManha, CafeTarde, Almoco, Jantar, Sobremesa, Outros).
+      4. Suggest a Title, Description, Prep Time (minutes), Difficulty (Fácil, Média, Difícil), Category (Café da Manhã, Almoço, Jantar, Sobremesa, Lanche, Outros).
       5. Translate everything to Portuguese.
 
       Return JSON format:
@@ -85,8 +85,8 @@ export async function registerRoutes(
         "title": string,
         "description": string,
         "prepTime": number,
-        "difficulty": "Facil" | "Media" | "Dificil",
-        "category": "CafeManha" | "CafeTarde" | "Almoco" | "Jantar" | "Sobremesa" | "Outros",
+        "difficulty": "Fácil" | "Média" | "Difícil",
+        "category": "Café da Manhã" | "Almoço" | "Jantar" | "Sobremesa" | "Lanche" | "Outros",
         "ingredients": [{ "name": string, "quantity": string, "unit": string }],
         "spices": [{ "name": string, "quantity": string }],
         "steps": [{ "content": string, "order": number }],
@@ -225,7 +225,13 @@ export async function registerRoutes(
           prompt: `Professional food photography of ${recipeData.title}. High quality, delicious, studio lighting.`,
           size: "1024x1024",
         });
-        recipeData.imageUrl = imageResponse.data[0].url;
+        
+        const imageData = imageResponse.data[0];
+        if (imageData.b64_json) {
+          recipeData.imageUrl = `data:image/png;base64,${imageData.b64_json}`;
+        } else if (imageData.url) {
+          recipeData.imageUrl = imageData.url;
+        }
       } catch (e) {
         console.error("Image generation failed", e);
         // Continue without image
@@ -247,8 +253,18 @@ export async function registerRoutes(
         prompt: `Professional food photography of ${title}. High quality, delicious, studio lighting.`,
         size: "1024x1024",
       });
-      console.log("Image generation response:", JSON.stringify(response.data[0]));
-      res.json({ imageUrl: response.data[0].url });
+      
+      const imageData = response.data[0];
+      console.log("Image generation response:", JSON.stringify(imageData));
+      
+      let imageUrl = "";
+      if (imageData.b64_json) {
+        imageUrl = `data:image/png;base64,${imageData.b64_json}`;
+      } else if (imageData.url) {
+        imageUrl = imageData.url;
+      }
+      
+      res.json({ imageUrl });
     } catch (e: any) {
       console.error("Image generation error:", e);
       res.status(500).json({ message: e.message || "Failed to generate image" });

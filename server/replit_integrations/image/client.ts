@@ -20,8 +20,17 @@ export async function generateImageBuffer(
     prompt,
     size,
   });
-  const base64 = response.data[0]?.b64_json ?? "";
-  return Buffer.from(base64, "base64");
+  
+  const imageData = response.data[0];
+  if (imageData?.b64_json) {
+    return Buffer.from(imageData.b64_json, "base64");
+  } else if (imageData?.url) {
+    const imgRes = await fetch(imageData.url);
+    const arrayBuffer = await imgRes.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  }
+  
+  throw new Error("No image data returned from AI");
 }
 
 /**
