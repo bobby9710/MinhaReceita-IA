@@ -127,14 +127,14 @@ export default function AuthPage() {
               onClick={() => {
                 const username = loginForm.getValues("username") || registerForm.getValues("username");
                 if (!username) {
-                  useToast().toast({
+                  toast({
                     title: "Atenção",
                     description: "Por favor, digite seu nome de usuário para redefinir a senha.",
                     variant: "destructive"
                   });
                   return;
                 }
-                useToast().toast({
+                toast({
                   title: "Redefinição de Senha",
                   description: "Um link de redefinição foi enviado para o seu e-mail cadastrado (Simulação).",
                 });
