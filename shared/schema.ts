@@ -4,6 +4,7 @@ import { z } from "zod";
 import { relations } from "drizzle-orm";
 
 // Import Auth and Chat models to re-export them
+import { users } from "./models/auth";
 export * from "./models/auth";
 export * from "./models/chat";
 
