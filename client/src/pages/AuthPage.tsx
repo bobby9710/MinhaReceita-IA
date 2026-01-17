@@ -2,12 +2,20 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { ChefHat, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [, setLocation] = useLocation();
   const [isRegistering, setIsRegistering] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (user) {
+      setLocation("/");
+    }
+  }, [user, setLocation]);
 
   const loginForm = useForm({
     defaultValues: { username: "", password: "" }
@@ -18,7 +26,6 @@ export default function AuthPage() {
   });
 
   if (user) {
-    setLocation("/");
     return null;
   }
 
@@ -115,7 +122,25 @@ export default function AuthPage() {
             >
               {isRegistering ? "Já tenho uma conta" : "Cadastrar"}
             </button>
-            <button className="text-muted-foreground hover:text-foreground">
+            <button 
+              type="button"
+              onClick={() => {
+                const username = loginForm.getValues("username") || registerForm.getValues("username");
+                if (!username) {
+                  useToast().toast({
+                    title: "Atenção",
+                    description: "Por favor, digite seu nome de usuário para redefinir a senha.",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                useToast().toast({
+                  title: "Redefinição de Senha",
+                  description: "Um link de redefinição foi enviado para o seu e-mail cadastrado (Simulação).",
+                });
+              }}
+              className="text-muted-foreground hover:text-foreground"
+            >
               Redefinir senha
             </button>
           </div>
