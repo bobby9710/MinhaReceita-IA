@@ -8,6 +8,7 @@ export function registerAuthRoutes(app: Express): void {
   app.post("/api/register", async (req, res) => {
     try {
       const { username, password, firstName, email } = req.body;
+      console.log("Registering user:", username);
       const existingUser = await authStorage.getUserByUsername(username);
       if (existingUser) {
         return res.status(400).send("Usuário já existe");
@@ -21,11 +22,17 @@ export function registerAuthRoutes(app: Express): void {
         email,
       });
 
+      console.log("User created:", user.id);
+
       req.login(user, (err) => {
-        if (err) return res.status(500).send("Erro ao logar após registro");
+        if (err) {
+          console.error("req.login error:", err);
+          return res.status(500).send("Erro ao logar após registro");
+        }
         res.status(201).json(user);
       });
     } catch (err) {
+      console.error("Register error detail:", err);
       res.status(500).send("Erro ao registrar usuário");
     }
   });
