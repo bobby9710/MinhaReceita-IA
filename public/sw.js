@@ -5,9 +5,7 @@ const ASSETS_TO_CACHE = [
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
-  '/favicon.png',
-  '/src/main.tsx',
-  '/src/App.tsx'
+  '/favicon.png'
 ];
 
 self.addEventListener('install', (event) => {
