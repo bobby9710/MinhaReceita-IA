@@ -2,7 +2,7 @@
   "name": "MinhaReceita",
   "short_name": "Receita",
   "description": "Seu livro de receitas inteligente",
-  "start_url": "/",
+  "start_url": "/?pwa=true",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
