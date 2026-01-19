@@ -3,21 +3,3 @@ import App from "./App";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(<App />);
-
-// Register Service Worker for PWA
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then(registration => {
-      console.log('SW registered: ', registration);
-    }).catch(err => {
-      console.error('SW registration failed: ', err);
-    });
-  });
-
-  // Handle PWA installation prompt
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    console.log('PWA prompt captured');
-  });
-}
-
