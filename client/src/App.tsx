@@ -30,12 +30,15 @@ function Router() {
   );
 }
 
+import { PwaUpdateHandler } from "./components/PwaUpdateHandler";
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
+          <PwaUpdateHandler />
           <Router />
         </TooltipProvider>
       </AuthProvider>
