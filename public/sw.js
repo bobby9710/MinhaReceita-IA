@@ -1,11 +1,10 @@
-const CACHE_NAME = 'minhareceita-v5';
+const CACHE_NAME = 'minhareceita-v6';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/favicon.png',
+  '/assets/android/android-launchericon-192-192.png',
+  '/assets/android/android-launchericon-512-512.png',
   '/offline.html'
 ];
 
