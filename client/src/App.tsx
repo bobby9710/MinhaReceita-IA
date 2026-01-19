@@ -4,6 +4,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "./hooks/use-auth";
+import { PWALifecycle } from "@/components/PWALifecycle";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import NotFound from "@/pages/not-found";
 
 import AuthPage from "@/pages/AuthPage";
@@ -36,6 +38,8 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
+          <PWALifecycle />
+          <PWAInstallPrompt />
           <Router />
         </TooltipProvider>
       </AuthProvider>
