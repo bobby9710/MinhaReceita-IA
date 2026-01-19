@@ -7,8 +7,24 @@ createRoot(document.getElementById("root")!).render(<App />);
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(registration => {
+    // Determinar o caminho do SW
+    const swPath = '/sw.js';
+    navigator.serviceWorker.register(swPath).then(registration => {
       console.log('SW registered: ', registration);
+      
+      // Forçar atualização do SW se houver uma nova versão
+      registration.onupdatefound = () => {
+        const installingWorker = registration.installing;
+        if (installingWorker) {
+          installingWorker.onstatechange = () => {
+            if (installingWorker.state === 'installed') {
+              if (navigator.serviceWorker.controller) {
+                console.log('Nova versão instalada.');
+              }
+            }
+          };
+        }
+      };
     }).catch(err => {
       console.error('SW registration failed: ', err);
     });
@@ -17,12 +33,9 @@ if ('serviceWorker' in navigator) {
   // Handle PWA installation prompt
   let deferredPrompt: any;
   window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevent Chrome 67 and earlier from automatically showing the prompt
+    // Impedir o prompt automático
     e.preventDefault();
-    // Stash the event so it can be triggered later.
     deferredPrompt = e;
-    
-    // You can show a custom install button here if you want
-    console.log('PWA Install prompt available');
+    console.log('PWA prompt capturado');
   });
 }

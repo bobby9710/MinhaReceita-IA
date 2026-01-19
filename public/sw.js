@@ -1,18 +1,13 @@
-const CACHE_NAME = 'minhareceita-v6';
+const CACHE_NAME = 'minhareceita-v9';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/offline.html',
   '/assets/android/android-launchericon-192-192.png',
   '/assets/android/android-launchericon-512-512.png',
-  '/offline.html'
+  '/assets/ios/180.png'
 ];
-
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -39,6 +34,13 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Ignorar extensões e Vite
+  if (event.request.url.startsWith('chrome-extension') || 
+      event.request.url.includes('/@vite/client') || 
+      event.request.url.includes('hot-update.json')) {
+    return;
+  }
+
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => {
@@ -50,11 +52,13 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     caches.match(event.request).then((response) => {
-      return response || fetch(event.request).catch(() => {
-        if (event.request.destination === 'image') {
-          return caches.match('/favicon.png');
-        }
-      });
+      return response || fetch(event.request);
     })
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
