@@ -10,8 +10,8 @@ export function PwaUpdateHandler() {
 
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.getRegistration().then((reg) => {
-        if (!reg) return;
+      // Manual registration if Vite plugin is not available
+      navigator.serviceWorker.register('/sw.js').then(reg => {
         setRegistration(reg);
 
         const checkUpdate = () => {
@@ -20,7 +20,6 @@ export function PwaUpdateHandler() {
           }
         };
 
-        // Check for updates every time the app is opened/focused
         window.addEventListener("focus", checkUpdate);
         reg.addEventListener("updatefound", () => {
           const newWorker = reg.installing;
@@ -33,9 +32,7 @@ export function PwaUpdateHandler() {
           }
         });
 
-        // Initial check
         checkUpdate();
-
         return () => window.removeEventListener("focus", checkUpdate);
       });
     }
@@ -45,7 +42,7 @@ export function PwaUpdateHandler() {
     if (needRefresh) {
       toast({
         title: "Atualização Disponível",
-        description: "Uma nova versão do MinhaReceita está pronta.",
+        description: "Uma nova versão do aplicativo está pronta.",
         action: (
           <Button 
             size="sm" 
@@ -66,12 +63,10 @@ export function PwaUpdateHandler() {
       registration.waiting.postMessage({ type: "SKIP_WAITING" });
     }
     
-    // Listen for the controlling service worker changing and reload
     navigator.serviceWorker.addEventListener("controllerchange", () => {
       window.location.reload();
     });
 
-    // Fallback: reload if controllerchange doesn't fire (some edge cases)
     setTimeout(() => window.location.reload(), 2000);
   };
 

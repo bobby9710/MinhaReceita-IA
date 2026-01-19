@@ -20,3 +20,4 @@ if ('serviceWorker' in navigator) {
     console.log('PWA prompt captured');
   });
 }
+
