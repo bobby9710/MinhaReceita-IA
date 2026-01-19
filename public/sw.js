@@ -1,4 +1,4 @@
-const CACHE_NAME = 'minhareceita-v9';
+const CACHE_NAME = 'minhareceita-v10';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -6,7 +6,8 @@ const ASSETS_TO_CACHE = [
   '/offline.html',
   '/assets/android/android-launchericon-192-192.png',
   '/assets/android/android-launchericon-512-512.png',
-  '/assets/ios/180.png'
+  '/assets/ios/180.png',
+  '/assets/ios/32.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -34,13 +35,6 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Ignorar extensões e Vite
-  if (event.request.url.startsWith('chrome-extension') || 
-      event.request.url.includes('/@vite/client') || 
-      event.request.url.includes('hot-update.json')) {
-    return;
-  }
-
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => {
