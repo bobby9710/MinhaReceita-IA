@@ -1,11 +1,12 @@
-const CACHE_NAME = 'minhareceita-v4';
+const CACHE_NAME = 'minhareceita-v5';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
-  '/favicon.png'
+  '/favicon.png',
+  '/offline.html'
 ];
 
 self.addEventListener('install', (event) => {
@@ -36,7 +37,7 @@ self.addEventListener('fetch', (event) => {
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => {
-        return caches.match('/');
+        return caches.match('/') || caches.match('/offline.html');
       })
     );
     return;
@@ -44,7 +45,11 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+      return response || fetch(event.request).catch(() => {
+        if (event.request.destination === 'image') {
+          return caches.match('/favicon.png');
+        }
+      });
     })
   );
 });
