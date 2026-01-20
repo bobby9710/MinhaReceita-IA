@@ -54,7 +54,7 @@ export default function MobileNav() {
 
         <div className="w-12" /> {/* Spacer for FAB */}
 
-        {navItems.slice(2, 3).map((item) => (
+        {navItems.slice(2).map((item) => (
           <Link key={item.href} href={item.href}>
             <button className={`flex flex-col items-center gap-1 min-w-[64px] ${isActive(item.href) ? "text-primary font-medium" : "text-muted-foreground"}`}>
               <item.icon className="w-6 h-6" />
@@ -62,39 +62,6 @@ export default function MobileNav() {
             </button>
           </Link>
         ))}
-
-        {/* Profile / Menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="flex flex-col items-center gap-1 min-w-[64px] text-muted-foreground">
-              <Avatar className="w-6 h-6 border">
-                <AvatarImage src={user?.profileImageUrl || undefined} />
-                <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                  {user?.firstName?.charAt(0) || user?.username.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-[10px]">Perfil</span>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="mb-2 w-48">
-            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-              Olá, {user?.firstName || user?.username}
-            </div>
-            <DropdownMenuItem asChild>
-              <Link href="/shopping-list" className="flex items-center gap-2 cursor-pointer">
-                <ShoppingCart className="w-4 h-4" />
-                <span>Lista de Compras</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              className="text-destructive focus:text-destructive flex items-center gap-2 cursor-pointer"
-              onClick={() => logoutMutation.mutate()}
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Sair</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </nav>
     </div>
   );

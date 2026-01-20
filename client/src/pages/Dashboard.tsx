@@ -4,12 +4,13 @@ import { useRecipes } from "@/hooks/use-recipes";
 import { useMealPlans } from "@/hooks/use-meal-plans";
 import { RecipeCard } from "@/components/RecipeCard";
 import { format, startOfDay, endOfDay } from "date-fns";
-import { Calendar, ShoppingBag, TrendingUp } from "lucide-react";
+import { Calendar, ShoppingBag, TrendingUp, LogOut } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
   const { data: recipes } = useRecipes();
   
   // Get today's meal plan
@@ -20,11 +21,21 @@ export default function Dashboard() {
 
   return (
     <PageLayout>
-      <header className="mb-10">
-        <h1 className="text-3xl font-display font-bold text-foreground mb-2">
-          Bom Apetite, {user?.firstName}! 👩‍🍳
-        </h1>
-        <p className="text-muted-foreground">Aqui está o que está acontecendo na sua cozinha hoje.</p>
+      <header className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-display font-bold text-foreground mb-2 flex items-center gap-2">
+            Bom Apetite, {user?.firstName}! 👩‍🍳
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-muted-foreground hover:text-destructive"
+              onClick={() => logoutMutation.mutate()}
+            >
+              <LogOut className="w-5 h-5" />
+            </Button>
+          </h1>
+          <p className="text-muted-foreground">Aqui está o que está acontecendo na sua cozinha hoje.</p>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
