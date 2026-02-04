@@ -31,7 +31,7 @@ export function useAddShoppingItem() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.shoppingList.list.path] });
-      toast({ title: "Added", description: "Item added to shopping list" });
+      toast({ title: "Adicionado", description: "Item adicionado à lista de compras" });
     },
   });
 }
