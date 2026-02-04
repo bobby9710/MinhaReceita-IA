@@ -1,11 +1,13 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
 import { api, errorSchemas } from "@shared/routes";
 import { z } from "zod";
 import { setupAuth, isAuthenticated } from "./replit_integrations/auth";
 import { registerAuthRoutes } from "./replit_integrations/auth";
 import { openai } from "./replit_integrations/image"; // Reuse OpenAI client
+import { sql } from "drizzle-orm";
 import { exec } from "child_process";
 import { promisify } from "util";
 import fs from "fs";
@@ -22,6 +24,8 @@ export async function registerRoutes(
   // Setup Auth first
   await setupAuth(app);
   registerAuthRoutes(app);
+
+  await ensureShoppingListPriceColumn();
 
   // === AI Helper Functions ===
   
@@ -332,4 +336,8 @@ export async function registerRoutes(
   });
 
   return httpServer;
+}
+
+async function ensureShoppingListPriceColumn() {
+  await db.execute(sql`ALTER TABLE "shopping_list" ADD COLUMN IF NOT EXISTS "price" text`);
 }
