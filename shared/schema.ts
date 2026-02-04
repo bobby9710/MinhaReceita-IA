@@ -69,6 +69,7 @@ export const shoppingList = pgTable("shopping_list", {
   name: text("name").notNull(),
   quantity: text("quantity"),
   unit: text("unit"),
+  price: text("price"),
   isBought: boolean("is_bought").default(false),
   recipeId: integer("recipe_id").references(() => recipes.id, { onDelete: "set null" }), // Optional link
 });
