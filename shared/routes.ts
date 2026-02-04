@@ -28,6 +28,8 @@ export const errorSchemas = {
   }),
 };
 
+export type ShoppingItem = typeof shoppingList.$inferSelect;
+
 export const api = {
   recipes: {
     list: {

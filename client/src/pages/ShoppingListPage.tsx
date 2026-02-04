@@ -1,9 +1,11 @@
 import { PageLayout } from "@/components/PageLayout";
 import { useShoppingList, useAddShoppingItem, useUpdateShoppingItem, useDeleteShoppingItem, useClearShoppingList } from "@/hooks/use-shopping-list";
-import { useState } from "react";
-import { Plus, Trash2, Check, ShoppingCart, Share2, Utensils } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Plus, Trash2, Check, ShoppingCart, Share2, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getIngredientIcon } from "@/lib/ingredient-icons";
+import { getShoppingCategory, shoppingCategoryOrder } from "@/lib/shopping-categories";
+import type { ShoppingItem } from "@shared/routes";
 
 export default function ShoppingListPage() {
   const { data: items, isLoading } = useShoppingList();
@@ -15,14 +17,30 @@ export default function ShoppingListPage() {
   const [newItemName, setNewItemName] = useState("");
   const [newItemQty, setNewItemQty] = useState("1");
   const [newItemUnit, setNewItemUnit] = useState("un");
+  const [newItemPrice, setNewItemPrice] = useState("");
+  const [activeItemId, setActiveItemId] = useState<number | null>(null);
+  const [editingItemId, setEditingItemId] = useState<number | null>(null);
+  const [editValues, setEditValues] = useState({
+    name: "",
+    quantity: "",
+    unit: "",
+    price: "",
+  });
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItemName.trim()) return;
-    addItem.mutate({ name: newItemName, quantity: newItemQty, unit: newItemUnit });
+    const priceValue = newItemPrice.trim();
+    addItem.mutate({
+      name: newItemName,
+      quantity: newItemQty,
+      unit: newItemUnit,
+      price: priceValue || undefined,
+    });
     setNewItemName("");
     setNewItemQty("1");
     setNewItemUnit("un");
+    setNewItemPrice("");
   };
 
   const shareOnWhatsApp = () => {
@@ -30,11 +48,18 @@ export default function ShoppingListPage() {
     const pending = items.filter(i => !i.isBought);
     if (pending.length === 0) return;
 
-    let text = "🛒 *Minha Lista de Compras - MinhaReceita*\n\n";
-    pending.forEach(item => {
-      text += `✅ ${item.name}: ${item.quantity} ${item.unit}\n`;
+    const grouped = groupItemsByCategory(pending);
+    let text = "*🛒 Minha Lista de Compras - MinhaReceita*\n\n";
+    shoppingCategoryOrder.forEach((category) => {
+      const categoryItems = grouped[category];
+      if (!categoryItems?.length) return;
+      text += `*${category}*\n`;
+      categoryItems.forEach((item) => {
+        text += `✅ ${formatItemDetails(item)}\n`;
+      });
+      text += "\n";
     });
-    text += "\n_Gerado por MinhaReceita_";
+    text = text.trim();
 
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
@@ -42,6 +67,169 @@ export default function ShoppingListPage() {
 
   const pendingItems = items?.filter(i => !i.isBought) || [];
   const boughtItems = items?.filter(i => i.isBought) || [];
+
+  const groupedPendingItems = useMemo(() => groupItemsByCategory(pendingItems), [pendingItems]);
+
+  const startEditing = (item: ShoppingItem) => {
+    setEditingItemId(item.id);
+    setEditValues({
+      name: item.name ?? "",
+      quantity: item.quantity ?? "",
+      unit: item.unit ?? "",
+      price: item.price ?? "",
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingItemId(null);
+    setEditValues({ name: "", quantity: "", unit: "", price: "" });
+  };
+
+  const saveEditing = (itemId: number) => {
+    const priceValue = editValues.price.trim();
+    updateItem.mutate({
+      id: itemId,
+      data: {
+        name: editValues.name,
+        quantity: editValues.quantity,
+        unit: editValues.unit,
+        price: priceValue || null,
+      },
+    });
+    cancelEditing();
+  };
+
+  const renderItem = (item: ShoppingItem, isBought: boolean) => {
+    const Icon = getIngredientIcon(item.name);
+    const isEditing = editingItemId === item.id;
+    const showEditButton = activeItemId === item.id;
+    const quantityDisplay = formatQuantityUnit(item);
+
+    return (
+      <div
+        key={item.id}
+        className={cn(
+          "flex items-center p-4 transition-colors group",
+          isBought ? "bg-muted/20" : "hover:bg-muted/30"
+        )}
+        onClick={() => setActiveItemId((prev) => (prev === item.id ? null : item.id))}
+      >
+        <button
+          onClick={(event) => {
+            event.stopPropagation();
+            updateItem.mutate({ id: item.id, data: { isBought: !isBought } });
+          }}
+          className={cn(
+            "w-6 h-6 rounded-full mr-4 flex items-center justify-center transition-colors",
+            isBought
+              ? "bg-emerald-500 border-none text-white"
+              : "border-2 border-muted-foreground/30 hover:border-primary"
+          )}
+        >
+          {isBought && <Check className="w-3 h-3" />}
+        </button>
+        <div className={cn("p-2 rounded-lg mr-3", isBought ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary")}>
+          <Icon className={cn("w-4 h-4", isBought && "opacity-50")} />
+        </div>
+        <div className={cn("flex-1", isBought && "line-through text-muted-foreground")}>
+          {isEditing ? (
+            <div className="flex flex-col gap-2">
+              <input
+                type="text"
+                value={editValues.name}
+                onChange={(event) => setEditValues((prev) => ({ ...prev, name: event.target.value }))}
+                className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              />
+              <div className="flex flex-wrap gap-2">
+                <input
+                  type="text"
+                  value={editValues.quantity}
+                  onChange={(event) => setEditValues((prev) => ({ ...prev, quantity: event.target.value }))}
+                  placeholder="Qtd"
+                  className="w-20 px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+                <input
+                  type="text"
+                  value={editValues.unit}
+                  onChange={(event) => setEditValues((prev) => ({ ...prev, unit: event.target.value }))}
+                  placeholder="Un"
+                  className="w-20 px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={editValues.price}
+                  onChange={(event) => setEditValues((prev) => ({ ...prev, price: event.target.value }))}
+                  placeholder="R$"
+                  className="w-24 px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-medium">{item.name}</span>
+              {quantityDisplay && <span className="text-sm text-muted-foreground">{quantityDisplay}</span>}
+              {item.price && <span className="text-sm text-muted-foreground">R$ {item.price}</span>}
+            </div>
+          )}
+        </div>
+        {isEditing ? (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={(event) => {
+                event.stopPropagation();
+                saveEditing(item.id);
+              }}
+              className="text-primary text-sm font-semibold"
+            >
+              Salvar
+            </button>
+            <button
+              onClick={(event) => {
+                event.stopPropagation();
+                cancelEditing();
+              }}
+              className="text-muted-foreground text-sm font-semibold"
+            >
+              Cancelar
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={(event) => {
+                event.stopPropagation();
+                startEditing(item);
+              }}
+              className={cn(
+                "text-muted-foreground/60 hover:text-primary transition-opacity p-2",
+                showEditButton ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}
+            >
+              <Pencil className="w-4 h-4" />
+            </button>
+            <button
+              onClick={(event) => {
+                event.stopPropagation();
+                deleteItem.mutate(item.id);
+              }}
+              className={cn(
+                "text-destructive/50 hover:text-destructive transition-all p-2",
+                isBought ? "" : "opacity-0 group-hover:opacity-100",
+                showEditButton && "opacity-100"
+              )}
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const pendingCategories = shoppingCategoryOrder.filter(
+    (category) => groupedPendingItems[category]?.length
+  );
 
   return (
     <PageLayout>
@@ -87,6 +275,14 @@ export default function ShoppingListPage() {
               value={newItemUnit}
               onChange={(e) => setNewItemUnit(e.target.value)}
             />
+            <input
+              type="text"
+              inputMode="decimal"
+              placeholder="R$"
+              className="w-24 px-4 py-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              value={newItemPrice}
+              onChange={(e) => setNewItemPrice(e.target.value)}
+            />
           </div>
           <button type="submit" className="bg-primary text-primary-foreground px-6 py-3 rounded-xl font-bold hover:bg-primary/90 transition-colors flex items-center justify-center">
             <Plus className="w-5 h-5" />
@@ -101,30 +297,16 @@ export default function ShoppingListPage() {
               <ShoppingCart className="w-5 h-5 text-accent-foreground/50" />
             </div>
             <div className="divide-y divide-border">
-              {pendingItems.map(item => {
-                const Icon = getIngredientIcon(item.name);
-                return (
-                  <div key={item.id} className="flex items-center p-4 hover:bg-muted/30 transition-colors group">
-                    <button 
-                      onClick={() => updateItem.mutate({ id: item.id, data: { isBought: true } })}
-                      className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 mr-4 hover:border-primary transition-colors"
-                    />
-                    <div className="p-2 bg-primary/10 rounded-lg text-primary mr-3">
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1">
-                      <span className="font-medium">{item.name}</span>
-                      <span className="text-sm text-muted-foreground ml-2">{item.quantity} {item.unit}</span>
-                    </div>
-                    <button 
-                      onClick={() => deleteItem.mutate(item.id)}
-                      className="text-destructive/50 hover:text-destructive opacity-0 group-hover:opacity-100 transition-all p-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+              {pendingCategories.map((category, index) => (
+                <div key={category} className={cn(index > 0 && "border-t border-border")}>
+                  <div className="px-6 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground bg-muted/30">
+                    {category}
                   </div>
-                );
-              })}
+                  <div className="divide-y divide-border">
+                    {groupedPendingItems[category].map((item) => renderItem(item, false))}
+                  </div>
+                </div>
+              ))}
               {pendingItems.length === 0 && (
                 <div className="p-8 text-center text-muted-foreground">
                   Seu carrinho está vazio! Hora de planejar algumas refeições?
@@ -138,32 +320,7 @@ export default function ShoppingListPage() {
             <div className="opacity-60">
               <h2 className="font-bold text-lg mb-3 px-2">Comprado</h2>
               <div className="bg-card rounded-2xl border border-border divide-y divide-border">
-                {boughtItems.map(item => {
-                  const Icon = getIngredientIcon(item.name);
-                  return (
-                    <div key={item.id} className="flex items-center p-4 bg-muted/20">
-                      <button 
-                        onClick={() => updateItem.mutate({ id: item.id, data: { isBought: false } })}
-                        className="w-6 h-6 rounded-full bg-emerald-500 border-none mr-4 flex items-center justify-center text-white"
-                      >
-                        <Check className="w-3 h-3" />
-                      </button>
-                      <div className="p-2 bg-muted rounded-lg text-muted-foreground mr-3">
-                        <Icon className="w-4 h-4 opacity-50" />
-                      </div>
-                      <div className="flex-1 line-through text-muted-foreground">
-                        <span className="font-medium">{item.name}</span>
-                        <span className="text-sm ml-2">{item.quantity} {item.unit}</span>
-                      </div>
-                      <button 
-                        onClick={() => deleteItem.mutate(item.id)}
-                        className="text-destructive/50 hover:text-destructive transition-colors p-2"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  );
-                })}
+                {boughtItems.map((item) => renderItem(item, true))}
               </div>
             </div>
           )}
@@ -171,4 +328,27 @@ export default function ShoppingListPage() {
       </div>
     </PageLayout>
   );
+}
+
+function formatQuantityUnit(item: ShoppingItem) {
+  const quantity = item.quantity?.trim();
+  const unit = item.unit?.trim();
+  const details = [quantity, unit].filter(Boolean).join(" ");
+  return details;
+}
+
+function formatItemDetails(item: ShoppingItem) {
+  const details = formatQuantityUnit(item);
+  return details ? `${item.name} (${details})` : item.name;
+}
+
+function groupItemsByCategory(items: ShoppingItem[]) {
+  return items.reduce<Record<string, ShoppingItem[]>>((acc, item) => {
+    const category = getShoppingCategory(item.name);
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(item);
+    return acc;
+  }, {});
 }
