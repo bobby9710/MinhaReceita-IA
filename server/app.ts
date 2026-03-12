@@ -16,6 +16,46 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
+function getAllowedOrigins() {
+  const fromEnv = process.env.FRONTEND_URL?.split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean) ?? [];
+
+  if (process.env.NODE_ENV !== "production") {
+    return Array.from(new Set([...fromEnv, "http://localhost:5173", "http://127.0.0.1:5173"]));
+  }
+
+  return fromEnv;
+}
+
+function applyCors(req: Request, res: Response, allowedOrigins: string[]) {
+  const origin = req.headers.origin;
+  if (!origin) return;
+
+  const isDevelopment = process.env.NODE_ENV !== "production";
+  const isAllowed = allowedOrigins.includes(origin);
+
+  if (isAllowed || (isDevelopment && allowedOrigins.length === 0)) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Vary", "Origin");
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+  }
+}
+
+function shouldServeFrontendAssets() {
+  if (process.env.SERVE_STATIC === "true") {
+    return true;
+  }
+
+  if (process.env.SERVE_STATIC === "false") {
+    return false;
+  }
+
+  return !process.env.FRONTEND_URL;
+}
+
 export function createApp() {
   if (appPromise) {
     return appPromise;
@@ -24,6 +64,17 @@ export function createApp() {
   appPromise = (async () => {
     const app = express();
     const httpServer = createServer(app);
+    const allowedOrigins = getAllowedOrigins();
+
+    app.set("trust proxy", process.env.NODE_ENV === "production" ? 1 : 0);
+
+    app.use((req, res, next) => {
+      applyCors(req, res, allowedOrigins);
+      if (req.method === "OPTIONS") {
+        return res.sendStatus(204);
+      }
+      next();
+    });
 
     app.use(
       express.json({
@@ -69,11 +120,12 @@ export function createApp() {
       const message = err.message || "Internal Server Error";
 
       res.status(status).json({ message });
-      throw err;
     });
 
     if (process.env.NODE_ENV === "production") {
-      serveStatic(app);
+      if (shouldServeFrontendAssets()) {
+        serveStatic(app);
+      }
     } else {
       const { setupVite } = await import("./vite");
       await setupVite(httpServer, app);

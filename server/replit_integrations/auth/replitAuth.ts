@@ -13,8 +13,19 @@ declare global {
   }
 }
 
+function getSessionCookieConfig(isProduction: boolean): session.CookieOptions {
+  const frontends = process.env.FRONTEND_URL?.split(",").map((item) => item.trim()).filter(Boolean) ?? [];
+  const hasExternalFrontend = isProduction && frontends.length > 0;
+
+  return {
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    sameSite: hasExternalFrontend ? "none" : "lax",
+    secure: hasExternalFrontend,
+  };
+}
+
 export async function setupAuth(app: Express) {
-  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const PostgresStore = connectPg(session);
   const sessionStore = new PostgresStore({
     conString: process.env.DATABASE_URL,
@@ -22,17 +33,14 @@ export async function setupAuth(app: Express) {
     tableName: "sessions",
   });
 
-  app.set("trust proxy", 1);
   app.use(
     session({
       secret: process.env.SESSION_SECRET || "minha-receita-secret",
       resave: false,
       saveUninitialized: false,
       store: sessionStore,
-      cookie: {
-        maxAge: sessionTtl,
-        secure: app.get("env") === "production",
-      },
+      proxy: process.env.NODE_ENV === "production",
+      cookie: getSessionCookieConfig(process.env.NODE_ENV === "production"),
     })
   );
 

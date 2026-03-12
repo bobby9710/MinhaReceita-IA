@@ -49,9 +49,9 @@ export default function LandingPage() {
             <p className="text-muted-foreground">Faça login para acessar seu livro de receitas e planos de refeições.</p>
           </div>
 
-          <a href="/api/login">
+          <a href="/auth">
             <button className="w-full group bg-primary text-primary-foreground py-4 px-6 rounded-2xl font-bold text-lg shadow-xl shadow-primary/20 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3">
-              <span>Continuar com Replit</span>
+              <span>Ir para login</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </a>

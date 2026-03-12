@@ -1,12 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl, type ShoppingItem } from "@shared/routes";
 import { useToast } from "@/hooks/use-toast";
+import { apiFetch } from "@/lib/api";
 
 export function useShoppingList() {
   return useQuery({
     queryKey: [api.shoppingList.list.path],
     queryFn: async () => {
-      const res = await fetch(api.shoppingList.list.path, { credentials: "include" });
+      const res = await apiFetch(api.shoppingList.list.path);
       if (!res.ok) throw new Error("Failed to fetch shopping list");
       return api.shoppingList.list.responses[200].parse(await res.json());
     },
@@ -19,13 +20,12 @@ export function useAddShoppingItem() {
 
   return useMutation({
     mutationFn: async (data: Omit<ShoppingItem, "id" | "userId" | "isBought" | "recipeId">) => {
-      const res = await fetch(api.shoppingList.create.path, {
+      const res = await apiFetch(api.shoppingList.create.path, {
         method: api.shoppingList.create.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-        credentials: "include",
       });
-      
+
       if (!res.ok) throw new Error("Failed to add item");
       return api.shoppingList.create.responses[201].parse(await res.json());
     },
@@ -42,11 +42,10 @@ export function useUpdateShoppingItem() {
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<ShoppingItem> }) => {
       const url = buildUrl(api.shoppingList.update.path, { id });
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method: api.shoppingList.update.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-        credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to update item");
       return api.shoppingList.update.responses[200].parse(await res.json());
@@ -63,9 +62,8 @@ export function useDeleteShoppingItem() {
   return useMutation({
     mutationFn: async (id: number) => {
       const url = buildUrl(api.shoppingList.delete.path, { id });
-      const res = await fetch(url, { 
+      const res = await apiFetch(url, {
         method: api.shoppingList.delete.method,
-        credentials: "include" 
       });
       if (!res.ok) throw new Error("Failed to delete item");
     },
@@ -82,9 +80,8 @@ export function useAddFromRecipe() {
   return useMutation({
     mutationFn: async (recipeId: number) => {
       const url = buildUrl(api.shoppingList.addFromRecipe.path, { id: recipeId });
-      const res = await fetch(url, { 
+      const res = await apiFetch(url, {
         method: api.shoppingList.addFromRecipe.method,
-        credentials: "include" 
       });
       if (!res.ok) throw new Error("Failed to add ingredients");
       return res.json();
@@ -102,9 +99,8 @@ export function useClearShoppingList() {
 
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch(api.shoppingList.clear.path, { 
+      const res = await apiFetch(api.shoppingList.clear.path, {
         method: api.shoppingList.clear.method,
-        credentials: "include" 
       });
       if (!res.ok) throw new Error("Failed to clear list");
     },

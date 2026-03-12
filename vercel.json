@@ -1,19 +1,12 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "builds": [
+  "framework": "vite",
+  "buildCommand": "npm run build:frontend",
+  "outputDirectory": "dist/public",
+  "rewrites": [
     {
-      "src": "dist/vercel.cjs",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": "dist/public/**"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "dist/vercel.cjs"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

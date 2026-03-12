@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl, type RecipeWithDetails } from "@shared/routes";
 import { useToast } from "@/hooks/use-toast";
+import { apiFetch } from "@/lib/api";
 
 export function useRecipes(filters?: { category?: string; search?: string }) {
-  // Clean up empty filters
-  const cleanFilters = filters ? Object.fromEntries(
-    Object.entries(filters).filter(([_, v]) => v != null && v !== "")
-  ) : undefined;
+  const cleanFilters = filters
+    ? Object.fromEntries(Object.entries(filters).filter(([_, v]) => v != null && v !== ""))
+    : undefined;
 
   return useQuery({
     queryKey: [api.recipes.list.path, cleanFilters],
@@ -14,8 +14,8 @@ export function useRecipes(filters?: { category?: string; search?: string }) {
       const url = buildUrl(api.recipes.list.path);
       const queryParams = new URLSearchParams(cleanFilters as Record<string, string>).toString();
       const fullUrl = queryParams ? `${url}?${queryParams}` : url;
-      
-      const res = await fetch(fullUrl, { credentials: "include" });
+
+      const res = await apiFetch(fullUrl);
       if (!res.ok) throw new Error("Failed to fetch recipes");
       return api.recipes.list.responses[200].parse(await res.json());
     },
@@ -27,7 +27,7 @@ export function useRecipe(id: number) {
     queryKey: [api.recipes.get.path, id],
     queryFn: async () => {
       const url = buildUrl(api.recipes.get.path, { id });
-      const res = await fetch(url, { credentials: "include" });
+      const res = await apiFetch(url);
       if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch recipe");
       return api.recipes.get.responses[200].parse(await res.json());
@@ -42,13 +42,12 @@ export function useCreateRecipe() {
 
   return useMutation({
     mutationFn: async (data: RecipeWithDetails) => {
-      const res = await fetch(api.recipes.create.path, {
+      const res = await apiFetch(api.recipes.create.path, {
         method: api.recipes.create.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-        credentials: "include",
       });
-      
+
       if (!res.ok) {
         if (res.status === 400) {
           const error = await res.json();
@@ -75,11 +74,10 @@ export function useUpdateRecipe() {
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<RecipeWithDetails> }) => {
       const url = buildUrl(api.recipes.update.path, { id });
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method: api.recipes.update.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-        credentials: "include",
       });
 
       if (!res.ok) throw new Error("Failed to update recipe");
@@ -103,9 +101,8 @@ export function useDeleteRecipe() {
   return useMutation({
     mutationFn: async (id: number) => {
       const url = buildUrl(api.recipes.delete.path, { id });
-      const res = await fetch(url, { 
+      const res = await apiFetch(url, {
         method: api.recipes.delete.method,
-        credentials: "include" 
       });
       if (!res.ok) throw new Error("Failed to delete recipe");
     },
@@ -118,14 +115,13 @@ export function useDeleteRecipe() {
 
 export function useImportRecipe() {
   const { toast } = useToast();
-  
+
   return useMutation({
     mutationFn: async (url: string) => {
-      const res = await fetch(api.recipes.import.path, {
+      const res = await apiFetch(api.recipes.import.path, {
         method: api.recipes.import.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
-        credentials: "include",
       });
 
       if (!res.ok) throw new Error("Failed to import recipe. Try a different URL.");
@@ -140,13 +136,12 @@ export function useImportRecipe() {
 export function useGenerateRecipeImage() {
   return useMutation({
     mutationFn: async (title: string) => {
-      const res = await fetch(api.recipes.generateImage.path, {
+      const res = await apiFetch(api.recipes.generateImage.path, {
         method: api.recipes.generateImage.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title }),
-        credentials: "include",
       });
-      
+
       if (!res.ok) throw new Error("Failed to generate image");
       return api.recipes.generateImage.responses[200].parse(await res.json());
     }
