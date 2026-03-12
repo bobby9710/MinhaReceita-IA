@@ -1,14 +1,19 @@
 {
+  "version": 2,
   "buildCommand": "npm run build",
-  "functions": {
-    "api/index.js": {
-      "includeFiles": "dist/**"
-    }
-  },
-  "rewrites": [
+  "builds": [
     {
-      "source": "/(.*)",
-      "destination": "/api/index.js"
+      "src": "dist/vercel.cjs",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": "dist/public/**"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "dist/vercel.cjs"
     }
   ]
 }
