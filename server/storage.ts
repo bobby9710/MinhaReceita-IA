@@ -1,5 +1,5 @@
 ﻿import { db, mongoClient, nextId } from "./db";
-import type { Recipe, RecipeWithDetails, InsertMealPlan, MealPlan, InsertShoppingItem, ShoppingItem } from "@shared/schema";
+import type { Recipe, RecipeWithDetails, InsertMealPlan, MealPlan, InsertShoppingItem, ShoppingItem } from "../shared/schema";
 import { claimImageAsset, deleteImageAsset } from "./image-assets";
 type RecipeDocument = Recipe & RecipeWithDetails;
 const recipes = db.collection<RecipeDocument>("recipes");

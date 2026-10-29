@@ -1,5 +1,5 @@
 ﻿import { db, nextId, mongoClient } from "../../db";
-import type { Conversation, Message } from "@shared/models/chat";
+import type { Conversation, Message } from "../../../shared/models/chat";
 const conversations = db.collection<Conversation>("conversations");
 const messages = db.collection<Message>("messages");
 const projection = { _id: 0 };

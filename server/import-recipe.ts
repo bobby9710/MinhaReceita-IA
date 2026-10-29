@@ -7,7 +7,7 @@ import { AIError, transcribeAudio, analyzeVideo, generateRecipe } from "./ai";
 import { normalizeImportUrl, downloadVideo, prepareVideo, prepareAudio, collectComments, extractVideoCover } from "./video-sources";
 import { createHash } from "node:crypto";
 import { db } from "./db";
-import { recipeWithDetailsSchema, type RecipeWithDetails } from "@shared/schema";
+import { recipeWithDetailsSchema, type RecipeWithDetails } from "../shared/schema";
 import { generateRecipeImageAsset, saveImageAsset } from "./image-assets";
 
 export function isPublicIPv4(address: string) {

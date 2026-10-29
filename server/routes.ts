@@ -3,7 +3,7 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { AIError, aiCapabilities, generateRecipe } from "./ai";
 import { importRecipe } from "./import-recipe";
-import { api, errorSchemas } from "@shared/routes";
+import { api, errorSchemas } from "../shared/routes";
 import { z } from "zod";
 import { setupAuth, isAuthenticated } from "./replit_integrations/auth";
 import { registerAuthRoutes } from "./replit_integrations/auth";

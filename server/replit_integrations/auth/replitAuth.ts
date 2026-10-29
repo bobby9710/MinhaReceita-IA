@@ -6,7 +6,7 @@ import MongoStore from "connect-mongo";
 import { mongoClient, db } from "../../db";
 import bcrypt from "bcryptjs";
 import { authStorage } from "./storage";
-import { User as SelectUser } from "@shared/models/auth";
+import { User as SelectUser } from "../../../shared/models/auth";
 
 declare global {
   namespace Express {

@@ -3,7 +3,7 @@ import { authStorage } from "./storage";
 import { isAuthenticated } from "./replitAuth";
 import passport from "passport";
 import bcrypt from "bcryptjs";
-import { insertUserSchema, type User } from "@shared/models/auth";
+import { insertUserSchema, type User } from "../../../shared/models/auth";
 import { ZodError } from "zod";
 
 function publicUser(user: User) {

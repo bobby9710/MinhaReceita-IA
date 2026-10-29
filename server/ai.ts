@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { z } from "zod";
-import { recipeWithDetailsSchema, type RecipeWithDetails } from "@shared/schema";
+import { recipeWithDetailsSchema, type RecipeWithDetails } from "../shared/schema";
 import { db } from "./db";
 
 type Provider = "groq" | "gemini";
