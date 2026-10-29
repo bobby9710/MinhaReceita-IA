@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "http";
+import { createApp } from "../server/app.ts";
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   try {
@@ -10,7 +11,6 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       const query = requestUrl.searchParams.toString();
       req.url = `/api/${normalizedPath}${query ? `?${query}` : ""}`;
     }
-    const { createApp } = await import("../server/app");
     const app = await createApp();
     return app(req as any, res as any);
   } catch (error) {
