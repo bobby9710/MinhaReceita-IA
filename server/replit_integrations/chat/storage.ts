@@ -1,43 +1,26 @@
-import { db } from "../../db";
-import { conversations, messages } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
-
-export interface IChatStorage {
-  getConversation(id: number): Promise<typeof conversations.$inferSelect | undefined>;
-  getAllConversations(): Promise<(typeof conversations.$inferSelect)[]>;
-  createConversation(title: string): Promise<typeof conversations.$inferSelect>;
-  deleteConversation(id: number): Promise<void>;
-  getMessagesByConversation(conversationId: number): Promise<(typeof messages.$inferSelect)[]>;
-  createMessage(conversationId: number, role: string, content: string): Promise<typeof messages.$inferSelect>;
-}
-
-export const chatStorage: IChatStorage = {
-  async getConversation(id: number) {
-    const [conversation] = await db.select().from(conversations).where(eq(conversations.id, id));
-    return conversation;
-  },
-
-  async getAllConversations() {
-    return db.select().from(conversations).orderBy(desc(conversations.createdAt));
-  },
-
-  async createConversation(title: string) {
-    const [conversation] = await db.insert(conversations).values({ title }).returning();
-    return conversation;
-  },
-
-  async deleteConversation(id: number) {
-    await db.delete(messages).where(eq(messages.conversationId, id));
-    await db.delete(conversations).where(eq(conversations.id, id));
-  },
-
-  async getMessagesByConversation(conversationId: number) {
-    return db.select().from(messages).where(eq(messages.conversationId, conversationId)).orderBy(messages.createdAt);
-  },
-
-  async createMessage(conversationId: number, role: string, content: string) {
-    const [message] = await db.insert(messages).values({ conversationId, role, content }).returning();
-    return message;
-  },
+﻿import { db, nextId, mongoClient } from "../../db";
+import type { Conversation, Message } from "@shared/models/chat";
+const conversations = db.collection<Conversation>("conversations");
+const messages = db.collection<Message>("messages");
+const projection = { _id: 0 };
+export const chatStorage = {
+ async getConversation(id: number) { return await conversations.findOne({ id }, { projection }) ?? undefined; },
+ async getAllConversations() { return conversations.find({}, { projection }).sort({ createdAt: -1 }).toArray(); },
+ async createConversation(title: string) {
+  const item = { id: await nextId("conversations"), title, createdAt: new Date() };
+  await conversations.insertOne({ ...item }); return item;
+ },
+ async deleteConversation(id: number) {
+  const session = mongoClient.startSession();
+  try { await session.withTransaction(async () => {
+   await messages.deleteMany({ conversationId: id }, { session });
+   await conversations.deleteOne({ id }, { session });
+  }); } finally { await session.endSession(); }
+ },
+ async getMessagesByConversation(conversationId: number) { return messages.find({ conversationId }, { projection }).sort({ createdAt: 1 }).toArray(); },
+ async createMessage(conversationId: number, role: string, content: string) {
+  const item = { id: await nextId("messages"), conversationId, role, content, createdAt: new Date() };
+  await messages.insertOne({ ...item }); return item;
+ },
 };
-
+export type IChatStorage = typeof chatStorage;

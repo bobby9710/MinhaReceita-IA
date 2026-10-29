@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl, type RecipeWithDetails } from "@shared/routes";
 import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api";
+import { recipeWithDetailsSchema } from "@shared/schema";
 
 export function useRecipes(filters?: { category?: string; search?: string }) {
   const cleanFilters = filters
@@ -32,7 +33,7 @@ export function useRecipe(id: number) {
       if (!res.ok) throw new Error("Failed to fetch recipe");
       return api.recipes.get.responses[200].parse(await res.json());
     },
-    enabled: !isNaN(id),
+    enabled: Number.isInteger(id) && id > 0,
   });
 }
 
@@ -117,33 +118,53 @@ export function useImportRecipe() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (url: string) => {
+    mutationFn: async ({ url, supplementalText }: { url: string; supplementalText?: string }) => {
       const res = await apiFetch(api.recipes.import.path, {
         method: api.recipes.import.method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url, supplementalText }),
       });
 
-      if (!res.ok) throw new Error("Failed to import recipe. Try a different URL.");
+      if (!res.ok) throw new Error((await res.json()).message || "Não foi possível importar a receita.");
       return api.recipes.import.responses[200].parse(await res.json());
     },
     onError: (error) => {
-      toast({ title: "Import Failed", description: error.message, variant: "destructive" });
+      toast({ title: "Não foi possível importar", description: error.message, variant: "destructive" });
     },
   });
 }
 
-export function useGenerateRecipeImage() {
+export function useGenerateRecipe() {
+  const { toast } = useToast();
   return useMutation({
-    mutationFn: async (title: string) => {
+    mutationFn: async (prompt: string) => {
+      const res = await apiFetch(api.recipes.generate.path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Não foi possível gerar a receita.");
+      return recipeWithDetailsSchema.parse(data);
+    },
+    onError: error => toast({ title: "Não foi possível gerar", description: error.message, variant: "destructive" }),
+  });
+}
+
+export function useGenerateRecipeImage() {
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (input: { title: string; description?: string; ingredients?: { name: string; quantity?: string | null; unit?: string | null }[]; spices?: { name: string; quantity?: string | null }[]; steps?: { content: string }[]; variation?: string }) => {
       const res = await apiFetch(api.recipes.generateImage.path, {
         method: api.recipes.generateImage.method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title }),
+        body: JSON.stringify(input),
       });
 
-      if (!res.ok) throw new Error("Failed to generate image");
-      return api.recipes.generateImage.responses[200].parse(await res.json());
-    }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Não foi possível gerar a imagem.");
+      return api.recipes.generateImage.responses[200].parse(data);
+    },
+    onError: error => toast({ title: "Imagem não gerada", description: error.message, variant: "destructive" }),
   });
 }

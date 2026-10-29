@@ -21,11 +21,11 @@ export async function generateImageBuffer(
     size,
   });
   
-  const imageData = response.data[0];
+  const imageData = response.data?.[0];
   if (imageData?.b64_json) {
-    return Buffer.from(imageData.b64_json, "base64");
+    return Buffer.from(imageData?.b64_json, "base64");
   } else if (imageData?.url) {
-    const imgRes = await fetch(imageData.url);
+    const imgRes = await fetch(imageData?.url);
     const arrayBuffer = await imgRes.arrayBuffer();
     return Buffer.from(arrayBuffer);
   }
@@ -56,7 +56,7 @@ export async function editImages(
     prompt,
   });
 
-  const imageBase64 = response.data[0]?.b64_json ?? "";
+  const imageBase64 = response.data?.[0]?.b64_json ?? "";
   const imageBytes = Buffer.from(imageBase64, "base64");
 
   if (outputPath) {

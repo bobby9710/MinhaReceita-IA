@@ -1,4 +1,4 @@
-services:
+﻿services:
   - type: web
     name: minhareceita-api
     env: node
@@ -9,13 +9,17 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DATABASE_URL
+      - key: MONGODB_URI
         sync: false
+      - key: MONGODB_DB
+        value: minha_receita
       - key: SESSION_SECRET
         sync: false
       - key: FRONTEND_URL
         sync: false
-      - key: OPENAI_API_KEY
+      - key: AI_PROVIDER
+        value: groq
+      - key: GROQ_API_KEY
         sync: false
       - key: SERVE_STATIC
         value: "false"

@@ -2,15 +2,13 @@ import { build as esbuild } from "esbuild";
 import { readFile } from "fs/promises";
 
 const allowlist = [
-  "connect-pg-simple",
   "cors",
-  "drizzle-orm",
   "express",
+  "express-async-errors",
   "express-session",
   "openai",
   "passport",
   "passport-local",
-  "pg",
   "ws",
   "zod",
 ];

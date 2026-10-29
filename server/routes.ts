@@ -1,142 +1,34 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
-import { db } from "./db";
+import { AIError, aiCapabilities, generateRecipe } from "./ai";
+import { importRecipe } from "./import-recipe";
 import { api, errorSchemas } from "@shared/routes";
 import { z } from "zod";
 import { setupAuth, isAuthenticated } from "./replit_integrations/auth";
 import { registerAuthRoutes } from "./replit_integrations/auth";
-import { openai } from "./replit_integrations/image"; // Reuse OpenAI client
-import { sql } from "drizzle-orm";
-import { exec } from "child_process";
-import { promisify } from "util";
-import fs from "fs";
-import path from "path";
-import { randomUUID } from "crypto";
-
-const execAsync = promisify(exec);
-
+import { generateRecipeImageAsset, getImageAsset } from "./image-assets";
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  
+
   // Setup Auth first
   await setupAuth(app);
   registerAuthRoutes(app);
-
-  await ensureShoppingListPriceColumn();
-
-  // === AI Helper Functions ===
-  
-  async function downloadAudio(url: string): Promise<string> {
-    // Ensure downloads dir exists
-    const downloadDir = path.join(process.cwd(), "downloads");
-    if (!fs.existsSync(downloadDir)) {
-      fs.mkdirSync(downloadDir);
-    }
-
-    const outputId = randomUUID();
-    const outputPath = path.join(downloadDir, `${outputId}.%(ext)s`);
-    
-    // Use yt-dlp to download audio
-    // -x: extract audio
-    // --audio-format mp3: convert to mp3
-    // --audio-quality 0: best quality
-    try {
-      // Check if it's a video site supported by yt-dlp
-      await execAsync(`yt-dlp -x --audio-format mp3 --audio-quality 9 -o "${outputPath}" "${url}"`);
-      return path.join(downloadDir, `${outputId}.mp3`);
-    } catch (error) {
-      console.error("yt-dlp error:", error);
-      throw new Error("Failed to download media from URL. Make sure it's a valid public link.");
-    }
-  }
-
-  async function transcribeAudio(filePath: string): Promise<string> {
-    try {
-      // Need to use fs.createReadStream for OpenAI file upload
-      const transcription = await openai.audio.transcriptions.create({
-        file: fs.createReadStream(filePath),
-        model: "gpt-4o-mini-transcribe",
-      });
-      return transcription.text;
-    } catch (error) {
-      console.error("Transcription error:", error);
-      throw new Error("Failed to transcribe audio.");
-    } finally {
-      // Cleanup file
-      fs.unlink(filePath, () => {});
-    }
-  }
-
-  async function analyzeRecipe(text: string, originalUrl: string): Promise<any> {
-    const prompt = `
-      Analyze the following cooking content and extract a structured recipe.
-      Content: "${text}"
-      
-      HARD RULES:
-      1. Strictly separate Ingredients (food items) from Spices (seasonings, salt, pepper, herbs).
-         - Ingredients MUST have quantity and unit (e.g., 500g, 1 xícara).
-         - Spices can have optional quantity but NO unit (e.g., "sal", "pimenta a gosto").
-      2. If quantity is missing for Ingredients, infer it. For Spices, use "a gosto" if quantity is null.
-      3. Format Step-by-step instructions clearly.
-      4. Suggest a Title, Description, Prep Time (minutes), Difficulty (Fácil, Média, Difícil), Category (Café da Manhã, Almoço, Jantar, Sobremesa, Lanche, Outros).
-      5. Translate everything to Portuguese.
-
-      Return JSON format:
-      {
-        "title": string,
-        "description": string,
-        "prepTime": number,
-        "difficulty": "Fácil" | "Média" | "Difícil",
-        "category": "Café da Manhã" | "Almoço" | "Jantar" | "Sobremesa" | "Lanche" | "Outros",
-        "ingredients": [{ "name": string, "quantity": string, "unit": string }],
-        "spices": [{ "name": string, "quantity": string }],
-        "steps": [{ "content": string, "order": number }],
-        "notes": string (optional observations)
-      }
-    `;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{ role: "system", content: "You are a professional chef assistant. You strictly follow the separation between ingredients and spices." }, { role: "user", content: prompt }],
-      response_format: { type: "json_object" },
-    });
-
-    const content = response.choices[0].message.content;
-    if (!content) throw new Error("AI returned empty response");
-    
-    const data = JSON.parse(content);
-    
-    // Explicit server-side validation of the separation rule
-    if (data.ingredients && data.spices) {
-      const commonItems = data.ingredients.filter((i: any) => 
-        data.spices.some((s: any) => s.name.toLowerCase() === i.name.toLowerCase())
-      );
-      if (commonItems.length > 0) {
-        // Force cleanup if AI hallucinated overlap
-        data.ingredients = data.ingredients.filter((i: any) => 
-          !commonItems.some((c: any) => c.name === i.name)
-        );
-      }
-    }
-
-    return { ...data, sourceUrl: originalUrl };
-  }
 
   // === Recipes Routes ===
 
   app.get(api.recipes.list.path, isAuthenticated, async (req, res) => {
     const userId = (req.user as any).id;
-    const { category, search } = req.query as any;
+    const { category, search } = z.object({ category: z.string().optional(), search: z.string().max(200).optional() }).parse(req.query);
     const recipes = await storage.getRecipes(userId, category, search);
     res.json(recipes);
   });
 
   app.get(api.recipes.get.path, isAuthenticated, async (req, res) => {
-    const recipe = await storage.getRecipe(Number(req.params.id));
-    if (!recipe) return res.status(404).json({ message: "Recipe not found" });
+    const recipe = await storage.getRecipe(Number(req.params.id), req.user!.id);
+    if (!recipe) return res.status(404).json({ message: "Receita não encontrada" });
     res.json(recipe);
   });
 
@@ -147,10 +39,11 @@ export async function registerRoutes(
       const recipe = await storage.createRecipe(input, userId);
       res.status(201).json(recipe);
     } catch (err) {
+      if ((err as any).status === 404) return res.status(404).json({ message: "Receita não encontrada." });
       if (err instanceof z.ZodError) {
-        return res.status(400).json({ message: err.errors[0].message });
+        return res.status(400).json({ message: "Verifique os campos obrigatórios da receita." });
       }
-      res.status(500).json({ message: "Internal Server Error" });
+      res.status(500).json({ message: "Não foi possível salvar a receita" });
     }
   });
 
@@ -161,10 +54,11 @@ export async function registerRoutes(
       const recipe = await storage.updateRecipe(Number(req.params.id), input, userId);
       res.json(recipe);
     } catch (err) {
+      if ((err as any).status === 404) return res.status(404).json({ message: "Receita não encontrada." });
       if (err instanceof z.ZodError) {
-        return res.status(400).json({ message: err.errors[0].message });
+        return res.status(400).json({ message: "Verifique os campos obrigatórios da receita." });
       }
-      res.status(500).json({ message: "Internal Server Error" });
+      res.status(500).json({ message: "Não foi possível salvar a receita" });
     }
   });
 
@@ -174,105 +68,52 @@ export async function registerRoutes(
     res.status(204).send();
   });
 
-  // === AI Import Route ===
+  app.get("/api/ai/capabilities", isAuthenticated, (_req, res) => res.json(aiCapabilities()));
+
+  const aiRequests = new Map<number, number>();
+  function reserveRequest(userId: number) {
+    const now = Date.now();
+    for (const [id, expiry] of aiRequests) if (expiry <= now) aiRequests.delete(id);
+    if (aiRequests.has(userId)) throw new AIError("Aguarde alguns segundos antes de fazer outro pedido de IA.", 429);
+    aiRequests.set(userId, now + 10000);
+  }
+  function aiFailure(error: unknown, res: import("express").Response) {
+    if (error instanceof z.ZodError) return res.status(400).json({ message: "Verifique o pedido ou endereço informado." });
+    if (error instanceof AIError) return res.status(error.status).json({ message: error.message });
+    return res.status(503).json({ message: "Não foi possível concluir o pedido de IA. Tente novamente mais tarde." });
+  }
+  app.post(api.recipes.generate.path, isAuthenticated, async (req, res) => {
+    try {
+      const { prompt } = api.recipes.generate.input.parse(req.body);
+      reserveRequest(req.user!.id);
+      const recipe = await generateRecipe(prompt, req.user!.id);
+      try { recipe.imageUrl = await generateRecipeImageAsset(recipe, req.user!.id); }
+      catch (error) {
+        if (error instanceof AIError && error.status === 429) return aiFailure(error, res);
+      }
+      res.json(recipe);
+    } catch (error) { aiFailure(error, res); }
+  });
   app.post(api.recipes.import.path, isAuthenticated, async (req, res) => {
     try {
-      const { url } = req.body;
-      
-      // 1. Determine type (Video vs Text)
-      // For MVP simplicity, we'll assume most social links are video/media and try yt-dlp first.
-      // If it fails or is a text site, we could use a scraper, but let's stick to yt-dlp -> Whisper for the "Video" requirement
-      // and direct text analysis for others.
-      
-      let textToAnalyze = "";
-
-      // Check if likely video
-      const isVideoSite = url.includes("youtube") || url.includes("youtu.be") || url.includes("tiktok") || url.includes("instagram");
-      
-      if (isVideoSite) {
-        console.log("Processing video...");
-        try {
-          const audioPath = await downloadAudio(url);
-          console.log("Audio downloaded, transcribing...");
-          textToAnalyze = await transcribeAudio(audioPath);
-        } catch (e) {
-           console.log("Video download failed, falling back to URL analysis directly (maybe description extraction)");
-           // Fallback: Ask AI to scrape/analyze the URL directly? 
-           // Replit AI integration doesn't support browsing.
-           // We will rely on what we have. If yt-dlp fails, we might just fail or try to guess from metadata if possible.
-           // For now, let's propagate the error if it was a video site.
-           throw e;
-        }
-      } else {
-        // Text site or unknown
-        // Ideally we fetch the HTML content.
-        // For MVP, since we don't have a browsing tool installed, we'll try to fetch using standard fetch if it's a static site.
-        try {
-          const response = await fetch(url);
-          const html = await response.text();
-          // Naive extraction of body text to avoid token limits
-          // A real scraper would be better, but we are limited.
-          textToAnalyze = html.replace(/<[^>]*>/g, ' ').substring(0, 15000); // Limit context
-        } catch (e) {
-          throw new Error("Failed to fetch website content");
-        }
-      }
-
-      console.log("Analyzing content...");
-      const recipeData = await analyzeRecipe(textToAnalyze, url);
-      
-      // Generate Image
-      console.log("Generating image...");
-      try {
-        const imageResponse = await openai.images.generate({
-          model: "gpt-image-1",
-          prompt: `Professional food photography of ${recipeData.title}. High quality, delicious, studio lighting.`,
-          size: "1024x1024",
-        });
-        
-        const imageData = imageResponse.data[0];
-        if (imageData.b64_json) {
-          recipeData.imageUrl = `data:image/png;base64,${imageData.b64_json}`;
-        } else if (imageData.url) {
-          recipeData.imageUrl = imageData.url;
-        }
-      } catch (e) {
-        console.error("Image generation failed", e);
-        // Continue without image
-      }
-
-      res.json(recipeData);
-
-    } catch (error: any) {
-      console.error("Import error:", error);
-      res.status(400).json({ message: error.message || "Failed to import recipe" });
-    }
+      const { url, supplementalText } = api.recipes.import.input.parse(req.body);
+      reserveRequest(req.user!.id);
+      res.json(await importRecipe(url, req.user!.id, supplementalText));
+    } catch (error) { aiFailure(error, res); }
   });
-
   app.post(api.recipes.generateImage.path, isAuthenticated, async (req, res) => {
     try {
-      const { title } = req.body;
-      const response = await openai.images.generate({
-        model: "gpt-image-1",
-        prompt: `Professional food photography of ${title}. High quality, delicious, studio lighting.`,
-        size: "1024x1024",
-      });
-      
-      const imageData = response.data[0];
-      console.log("Image generation response:", JSON.stringify(imageData));
-      
-      let imageUrl = "";
-      if (imageData.b64_json) {
-        imageUrl = `data:image/png;base64,${imageData.b64_json}`;
-      } else if (imageData.url) {
-        imageUrl = imageData.url;
-      }
-      
-      res.json({ imageUrl });
-    } catch (e: any) {
-      console.error("Image generation error:", e);
-      res.status(500).json({ message: e.message || "Failed to generate image" });
-    }
+      const input = api.recipes.generateImage.input.parse(req.body);
+      res.json({ imageUrl: await generateRecipeImageAsset(input, req.user!.id) });
+    } catch (error) { aiFailure(error, res); }
+  });
+  app.get("/api/recipe-images/:id", isAuthenticated, async (req, res) => {
+    const id = z.string().uuid().safeParse(req.params.id);
+    if (!id.success) return res.status(404).end();
+    const image = await getImageAsset(id.data, req.user!.id);
+    if (!image) return res.status(404).end();
+    res.set({ "Content-Type": image.mimeType, "Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff" });
+    res.send(image.data);
   });
 
   // === Meal Plans & Shopping List ===
@@ -326,7 +167,7 @@ export async function registerRoutes(
   app.post(api.shoppingList.addFromRecipe.path, isAuthenticated, async (req, res) => {
     const userId = (req.user as any).id;
     await storage.addIngredientsToShoppingList(Number(req.params.id), userId);
-    res.json({ message: "Ingredients added to shopping list" });
+    res.json({ message: "Ingredientes adicionados à lista de compras" });
   });
 
   app.delete(api.shoppingList.clear.path, isAuthenticated, async (req, res) => {
@@ -336,8 +177,4 @@ export async function registerRoutes(
   });
 
   return httpServer;
-}
-
-async function ensureShoppingListPriceColumn() {
-  await db.execute(sql`ALTER TABLE "shopping_list" ADD COLUMN IF NOT EXISTS "price" text`);
 }

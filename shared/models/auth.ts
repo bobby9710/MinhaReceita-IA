@@ -1,30 +1,13 @@
-import { sql } from "drizzle-orm";
-import { index, jsonb, pgTable, timestamp, varchar, serial, text } from "drizzle-orm/pg-core";
-
-// Session storage table.
-// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
-export const sessions = pgTable(
-  "sessions",
-  {
-    sid: varchar("sid").primaryKey(),
-    sess: jsonb("sess").notNull(),
-    expire: timestamp("expire").notNull(),
-  },
-  (table) => [index("IDX_session_expire").on(table.expire)]
-);
-
-// User storage table.
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: varchar("username").unique().notNull(),
-  password: text("password").notNull(),
-  email: varchar("email").unique(),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  profileImageUrl: varchar("profile_image_url"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+import { z } from "zod";
+export const insertUserSchema = z.object({
+ username: z.string().trim().min(3, "O usuário deve ter pelo menos 3 caracteres.").max(100, "O usuário deve ter no máximo 100 caracteres."),
+ password: z.string().min(8, "A senha deve ter pelo menos 8 caracteres.").max(200, "A senha deve ter no máximo 200 caracteres."),
+ email: z.preprocess(
+   value => typeof value === "string" && value.trim() === "" ? undefined : value,
+   z.string().trim().email("Informe um e-mail válido ou deixe o campo vazio.").nullable().optional(),
+ ),
+ firstName: z.string().max(100, "O nome deve ter no máximo 100 caracteres.").nullable().optional(),
+ lastName: z.string().max(100).nullable().optional(), profileImageUrl: z.string().nullable().optional(),
 });
-
-export type UpsertUser = typeof users.$inferInsert;
-export type User = typeof users.$inferSelect;
+export type UpsertUser = z.infer<typeof insertUserSchema>;
+export type User = UpsertUser & { id: number; createdAt: Date; updatedAt: Date };

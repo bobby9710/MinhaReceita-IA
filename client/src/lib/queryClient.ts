@@ -4,7 +4,12 @@ import { apiFetch } from "@/lib/api";
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    let message = text;
+    try {
+      const body = JSON.parse(text);
+      if (typeof body.message === "string") message = body.message;
+    } catch {}
+    throw new Error(`${res.status}: ${message}`);
   }
 }
 

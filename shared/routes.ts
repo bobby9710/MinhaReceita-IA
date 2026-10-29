@@ -1,18 +1,18 @@
 import { z } from 'zod';
-import { 
-  insertRecipeSchema, 
-  insertIngredientSchema, 
-  insertSpiceSchema, 
+import {
+  insertRecipeSchema,
+  insertIngredientSchema,
+  insertSpiceSchema,
   insertStepSchema,
   insertMealPlanSchema,
   insertShoppingItemSchema,
   recipeWithDetailsSchema,
-  recipes,
-  ingredients,
-  spices,
-  steps,
-  mealPlans,
-  shoppingList
+  type Recipe,
+  type Ingredient,
+  type Spice,
+  type Step,
+  type MealPlan,
+  type ShoppingItem,
 } from './schema';
 
 export const errorSchemas = {
@@ -28,10 +28,16 @@ export const errorSchemas = {
   }),
 };
 
-export type ShoppingItem = typeof shoppingList.$inferSelect;
+export type { ShoppingItem, RecipeWithDetails, MealPlan } from "./schema";
 
 export const api = {
   recipes: {
+    generate: {
+      method: 'POST' as const,
+      path: '/api/recipes/generate',
+      input: z.object({ prompt: z.string().trim().min(10).max(12000) }),
+      responses: { 200: recipeWithDetailsSchema, 400: errorSchemas.validation },
+    },
     list: {
       method: 'GET' as const,
       path: '/api/recipes',
@@ -40,17 +46,17 @@ export const api = {
         search: z.string().optional(),
       }).optional(),
       responses: {
-        200: z.array(z.custom<typeof recipes.$inferSelect>()),
+        200: z.array(z.custom<Recipe>()),
       },
     },
     get: {
       method: 'GET' as const,
       path: '/api/recipes/:id',
       responses: {
-        200: z.custom<typeof recipes.$inferSelect & { 
-          ingredients: typeof ingredients.$inferSelect[], 
-          spices: typeof spices.$inferSelect[], 
-          steps: typeof steps.$inferSelect[] 
+        200: z.custom<Recipe & {
+          ingredients: Ingredient[],
+          spices: Spice[],
+          steps: Step[]
         }>(),
         404: errorSchemas.notFound,
       },
@@ -60,7 +66,7 @@ export const api = {
       path: '/api/recipes',
       input: recipeWithDetailsSchema,
       responses: {
-        201: z.custom<typeof recipes.$inferSelect>(),
+        201: z.custom<Recipe>(),
         400: errorSchemas.validation,
       },
     },
@@ -69,7 +75,7 @@ export const api = {
       path: '/api/recipes/:id',
       input: recipeWithDetailsSchema.partial(),
       responses: {
-        200: z.custom<typeof recipes.$inferSelect>(),
+        200: z.custom<Recipe>(),
         400: errorSchemas.validation,
         404: errorSchemas.notFound,
       },
@@ -85,7 +91,7 @@ export const api = {
     import: {
       method: 'POST' as const,
       path: '/api/recipes/import',
-      input: z.object({ url: z.string().url() }),
+      input: z.object({ url: z.string().trim().min(5).max(2000), supplementalText: z.string().max(6000).optional() }),
       responses: {
         200: recipeWithDetailsSchema, // Returns PREVIEW data, not saved yet
         400: errorSchemas.validation,
@@ -94,7 +100,14 @@ export const api = {
     generateImage: {
       method: 'POST' as const,
       path: '/api/recipes/generate-image',
-      input: z.object({ title: z.string() }),
+      input: z.object({
+        title: z.string().trim().min(1).max(200),
+        description: z.string().max(10000).optional(),
+        ingredients: z.array(z.object({ name: z.string().max(300), quantity: z.string().max(100).nullish(), unit: z.string().max(100).nullish() })).max(200).optional(),
+        spices: z.array(z.object({ name: z.string().max(300), quantity: z.string().max(100).nullish() })).max(100).optional(),
+        steps: z.array(z.object({ content: z.string().max(2000) })).max(100).optional(),
+        variation: z.string().max(64).optional(),
+      }),
       responses: {
         200: z.object({ imageUrl: z.string() }),
         500: errorSchemas.internal,
@@ -110,7 +123,7 @@ export const api = {
         endDate: z.string(),   // YYYY-MM-DD
       }),
       responses: {
-        200: z.array(z.custom<typeof mealPlans.$inferSelect & { recipe: typeof recipes.$inferSelect }>()),
+        200: z.array(z.custom<MealPlan & { recipe: Recipe }>()),
       },
     },
     create: {
@@ -118,7 +131,7 @@ export const api = {
       path: '/api/meal-plans',
       input: insertMealPlanSchema,
       responses: {
-        201: z.custom<typeof mealPlans.$inferSelect>(),
+        201: z.custom<MealPlan>(),
         400: errorSchemas.validation,
       },
     },
@@ -136,7 +149,7 @@ export const api = {
       method: 'GET' as const,
       path: '/api/shopping-list',
       responses: {
-        200: z.array(z.custom<typeof shoppingList.$inferSelect>()),
+        200: z.array(z.custom<ShoppingItem>()),
       },
     },
     create: {
@@ -144,7 +157,7 @@ export const api = {
       path: '/api/shopping-list',
       input: insertShoppingItemSchema,
       responses: {
-        201: z.custom<typeof shoppingList.$inferSelect>(),
+        201: z.custom<ShoppingItem>(),
         400: errorSchemas.validation,
       },
     },
@@ -153,7 +166,7 @@ export const api = {
       path: '/api/shopping-list/:id',
       input: insertShoppingItemSchema.partial(),
       responses: {
-        200: z.custom<typeof shoppingList.$inferSelect>(),
+        200: z.custom<ShoppingItem>(),
         404: errorSchemas.notFound,
       },
     },

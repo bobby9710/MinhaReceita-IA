@@ -1,132 +1,38 @@
-import { pgTable, text, serial, integer, boolean, timestamp, varchar, pgEnum } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { relations } from "drizzle-orm";
-
-// Import Auth and Chat models to re-export them
-import { users } from "./models/auth";
 export * from "./models/auth";
 export * from "./models/chat";
-
-// Enums
-export const difficultyEnum = pgEnum("difficulty", ["Fácil", "Média", "Difícil"]);
-export const categoryEnum = pgEnum("category", ["Café da Manhã", "Almoço", "Jantar", "Sobremesa", "Lanche", "Outros"]);
-
-// Recipes Table
-export const recipes = pgTable("recipes", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(), // Linked to Auth user.id (integer now)
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  prepTime: integer("prep_time").notNull(), // in minutes
-  difficulty: difficultyEnum("difficulty").notNull(),
-  category: categoryEnum("category").notNull(),
-  notes: text("notes"),
-  imageUrl: text("image_url"),
-  sourceUrl: text("source_url"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+export const difficultyEnum = { enumValues: ["Fácil", "Média", "Difícil"] as const };
+export const categoryEnum = { enumValues: ["Café da Manhã", "Almoço", "Jantar", "Sobremesa", "Lanche", "Outros"] as const };
+const id = z.number().int().positive();
+const optionalText = z.string().nullable().optional();
+export const importAnalysisSchema = z.object({
+ platform: z.enum(["tiktok", "instagram", "youtube", "website"]),
+ video: z.enum(["analyzed", "audio_only", "unavailable", "not_applicable"]),
+ description: z.boolean(), pinnedComments: z.number().int().nonnegative(), authorComments: z.number().int().nonnegative(),
+ warnings: z.array(z.string().max(2000)).max(40), analyzedAt: z.string(),
+ evidence: z.object({ description: z.string().max(10000), comments: z.array(z.string().max(2200)).max(20), videoObservations: z.string().max(20000), audioTranscript: z.string().max(20000).optional(), supplementalText: z.string().max(6000) }),
 });
-
-// Ingredients Table (Strictly separated from Spices)
-export const ingredients = pgTable("ingredients", {
-  id: serial("id").primaryKey(),
-  recipeId: integer("recipe_id").notNull().references(() => recipes.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  quantity: text("quantity").notNull(),
-  unit: text("unit").notNull(),
+export const insertRecipeSchema = z.object({
+ title: z.string().trim().min(1).max(200), description: z.string().min(1).max(10000),
+ prepTime: z.number().int().positive().max(10080), difficulty: z.enum(difficultyEnum.enumValues), category: z.enum(categoryEnum.enumValues),
+ notes: optionalText, imageUrl: z.string().max(8_000_000).nullable().optional(), sourceUrl: optionalText,
+ importAnalysis: importAnalysisSchema.optional(),
 });
-
-// Spices Table
-export const spices = pgTable("spices", {
-  id: serial("id").primaryKey(),
-  recipeId: integer("recipe_id").notNull().references(() => recipes.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  quantity: text("quantity"), // Optional for spices
-});
-
-// Steps Table
-export const steps = pgTable("steps", {
-  id: serial("id").primaryKey(),
-  recipeId: integer("recipe_id").notNull().references(() => recipes.id, { onDelete: "cascade" }),
-  content: text("content").notNull(),
-  order: integer("order").notNull(),
-});
-
-// Meal Plans Table
-export const mealPlans = pgTable("meal_plans", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  date: text("date").notNull(), // YYYY-MM-DD
-  category: categoryEnum("category").notNull(),
-  recipeId: integer("recipe_id").notNull().references(() => recipes.id, { onDelete: "cascade" }),
-});
-
-// Shopping List Table
-export const shoppingList = pgTable("shopping_list", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  name: text("name").notNull(),
-  quantity: text("quantity"),
-  unit: text("unit"),
-  price: text("price"),
-  isBought: boolean("is_bought").default(false),
-  recipeId: integer("recipe_id").references(() => recipes.id, { onDelete: "set null" }), // Optional link
-});
-
-// Relations
-export const recipesRelations = relations(recipes, ({ many }) => ({
-  ingredients: many(ingredients),
-  spices: many(spices),
-  steps: many(steps),
-}));
-
-export const ingredientsRelations = relations(ingredients, ({ one }) => ({
-  recipe: one(recipes, {
-    fields: [ingredients.recipeId],
-    references: [recipes.id],
-  }),
-}));
-
-export const spicesRelations = relations(spices, ({ one }) => ({
-  recipe: one(recipes, {
-    fields: [spices.recipeId],
-    references: [recipes.id],
-  }),
-}));
-
-export const stepsRelations = relations(steps, ({ one }) => ({
-  recipe: one(recipes, {
-    fields: [steps.recipeId],
-    references: [recipes.id],
-  }),
-}));
-
-export const mealPlansRelations = relations(mealPlans, ({ one }) => ({
-  recipe: one(recipes, {
-    fields: [mealPlans.recipeId],
-    references: [recipes.id],
-  }),
-}));
-
-// Zod Schemas
-export const insertRecipeSchema = createInsertSchema(recipes).omit({ id: true, createdAt: true, updatedAt: true, userId: true });
-export const insertIngredientSchema = createInsertSchema(ingredients).omit({ id: true, recipeId: true });
-export const insertSpiceSchema = createInsertSchema(spices).omit({ id: true, recipeId: true });
-export const insertStepSchema = createInsertSchema(steps).omit({ id: true, recipeId: true });
-export const insertMealPlanSchema = createInsertSchema(mealPlans).omit({ id: true, userId: true });
-export const insertShoppingItemSchema = createInsertSchema(shoppingList).omit({ id: true, userId: true });
-
-export type InsertMealPlan = z.infer<typeof insertMealPlanSchema>;
-export type InsertShoppingItem = z.infer<typeof insertShoppingItemSchema>;
-
-// Composite Types for API
+export const insertIngredientSchema = z.object({ name: z.string().min(1), quantity: z.string(), unit: z.string() });
+export const insertSpiceSchema = z.object({ name: z.string().min(1), quantity: optionalText });
+export const insertStepSchema = z.object({ content: z.string().min(1), order: id });
 export const recipeWithDetailsSchema = insertRecipeSchema.extend({
-  ingredients: z.array(insertIngredientSchema),
-  spices: z.array(insertSpiceSchema),
-  steps: z.array(insertStepSchema),
+ ingredients: z.array(insertIngredientSchema).min(1).max(200), spices: z.array(insertSpiceSchema).max(100), steps: z.array(insertStepSchema).min(1).max(200),
 });
-
-export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
-export type User = typeof users.$inferSelect;
-export type UpsertUser = z.infer<typeof insertUserSchema>;
+export const insertMealPlanSchema = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), category: z.enum(categoryEnum.enumValues), recipeId: id });
+export const insertShoppingItemSchema = z.object({ name: z.string().trim().min(1), quantity: optionalText, unit: optionalText, price: optionalText, isBought: z.boolean().nullable().optional(), recipeId: id.nullable().optional() });
+export type InsertRecipe = z.infer<typeof insertRecipeSchema>;
+export type RecipeWithDetails = z.infer<typeof recipeWithDetailsSchema>;
+export type Recipe = InsertRecipe & { id: number; userId: number; createdAt: Date; updatedAt: Date };
+export type Ingredient = z.infer<typeof insertIngredientSchema>;
+export type Spice = z.infer<typeof insertSpiceSchema>;
+export type Step = z.infer<typeof insertStepSchema>;
+export type InsertMealPlan = z.infer<typeof insertMealPlanSchema>;
+export type MealPlan = InsertMealPlan & { id: number; userId: number };
+export type InsertShoppingItem = z.infer<typeof insertShoppingItemSchema>;
+export type ShoppingItem = InsertShoppingItem & { id: number; userId: number };

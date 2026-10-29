@@ -8,15 +8,16 @@ declare module "http" {
 }
 
 (async () => {
-  const app = await createApp();
-  const httpServer = createServer(app);
+  const httpServer = createServer();
+  const app = await createApp(httpServer);
+  httpServer.on("request", app);
 
   const port = parseInt(process.env.PORT || "5000", 10);
   httpServer.listen(
     {
       port,
       host: "0.0.0.0",
-      reusePort: true,
+      reusePort: process.platform !== "win32",
     },
     () => {
       log(`serving on port ${port}`);

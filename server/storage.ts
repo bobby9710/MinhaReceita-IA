@@ -1,203 +1,78 @@
-import { db } from "./db";
-import { 
-  recipes, ingredients, spices, steps, mealPlans, shoppingList,
-  type Recipe, type InsertRecipe, type RecipeWithDetails,
-  type MealPlan, type InsertMealPlan,
-  type ShoppingItem, type InsertShoppingItem,
-  type User
-} from "@shared/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
-
-export interface IStorage {
-  // Recipes
-  createRecipe(recipe: RecipeWithDetails, userId: number): Promise<Recipe>;
-  getRecipe(id: number): Promise<(Recipe & { ingredients: any[], spices: any[], steps: any[] }) | undefined>;
-  getRecipes(userId: number, category?: string, search?: string): Promise<Recipe[]>;
-  updateRecipe(id: number, recipe: Partial<RecipeWithDetails>, userId: number): Promise<Recipe>;
-  deleteRecipe(id: number, userId: number): Promise<void>;
-
-  // Meal Plans
-  getMealPlans(userId: number, startDate: string, endDate: string): Promise<(MealPlan & { recipe: Recipe })[]>;
-  createMealPlan(plan: InsertMealPlan, userId: number): Promise<MealPlan>;
-  deleteMealPlan(id: number, userId: number): Promise<void>;
-
-  // Shopping List
-  getShoppingList(userId: number): Promise<ShoppingItem[]>;
-  createShoppingItem(item: InsertShoppingItem, userId: number): Promise<ShoppingItem>;
-  updateShoppingItem(id: number, updates: Partial<InsertShoppingItem>, userId: number): Promise<ShoppingItem>;
-  deleteShoppingItem(id: number, userId: number): Promise<void>;
-  clearShoppingList(userId: number): Promise<void>;
-  addIngredientsToShoppingList(recipeId: number, userId: number): Promise<void>;
+﻿import { db, mongoClient, nextId } from "./db";
+import type { Recipe, RecipeWithDetails, InsertMealPlan, MealPlan, InsertShoppingItem, ShoppingItem } from "@shared/schema";
+import { claimImageAsset, deleteImageAsset } from "./image-assets";
+type RecipeDocument = Recipe & RecipeWithDetails;
+const recipes = db.collection<RecipeDocument>("recipes");
+const plans = db.collection<MealPlan>("meal_plans");
+const shopping = db.collection<ShoppingItem>("shopping_list");
+const projection = { _id: 0 };
+function missing(): never { throw Object.assign(new Error("Registro não encontrado."), { status: 404 }); }
+export class DatabaseStorage {
+ async createRecipe(recipe: RecipeWithDetails, userId: number): Promise<RecipeDocument> {
+  const document = { ...recipe, id: await nextId("recipes"), userId, createdAt: new Date(), updatedAt: new Date() };
+  await recipes.insertOne({ ...document });
+  try { await claimImageAsset(document.imageUrl, userId, document.id); }
+  catch (error) { await recipes.deleteOne({ id: document.id, userId }); throw error; }
+  return document;
+ }
+ async getRecipe(id: number, userId: number) { return (await recipes.findOne({ id, userId }, { projection })) ?? undefined; }
+ async getRecipes(userId: number, category?: string, search?: string) {
+  const filter: Record<string, unknown> = { userId };
+  if (category) filter.category = category;
+  if (search) filter.title = { $regex: search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" };
+  return recipes.find(filter, { projection }).sort({ createdAt: -1 }).toArray();
+ }
+ async updateRecipe(id: number, updates: Partial<RecipeWithDetails>, userId: number) {
+  const existing = await recipes.findOne({ id, userId }, { projection: { imageUrl: 1 } });
+  if (!existing) return missing();
+  if (updates.imageUrl && updates.imageUrl !== existing.imageUrl) await claimImageAsset(updates.imageUrl, userId, id);
+  const recipe = await recipes.findOneAndUpdate({ id, userId }, { $set: { ...updates, updatedAt: new Date() } }, { returnDocument: "after", projection });
+  if (updates.imageUrl !== undefined && updates.imageUrl !== existing.imageUrl) await deleteImageAsset(existing.imageUrl, userId);
+  return recipe ?? missing();
+ }
+ async deleteRecipe(id: number, userId: number) {
+  const existing = await recipes.findOne({ id, userId }, { projection: { imageUrl: 1 } });
+  if (!existing) missing();
+  const session = mongoClient.startSession();
+  try {
+   await session.withTransaction(async () => {
+    const result = await recipes.deleteOne({ id, userId }, { session });
+    if (!result.deletedCount) missing();
+    await plans.deleteMany({ recipeId: id, userId }, { session });
+    await shopping.updateMany({ recipeId: id, userId }, { $set: { recipeId: null } }, { session });
+   });
+  } finally { await session.endSession(); }
+  await deleteImageAsset(existing.imageUrl, userId);
+ }
+ async getMealPlans(userId: number, startDate: string, endDate: string) {
+  const entries = await plans.find({ userId, date: { $gte: startDate, $lte: endDate } }, { projection }).toArray();
+  const result: (MealPlan & { recipe: Recipe })[] = [];
+  for (const plan of entries) { const recipe = await this.getRecipe(plan.recipeId, userId); if (recipe) result.push({ ...plan, recipe }); }
+  return result;
+ }
+ async createMealPlan(plan: InsertMealPlan, userId: number) {
+  if (!await this.getRecipe(plan.recipeId, userId)) missing();
+  const document = { ...plan, userId, id: await nextId("meal_plans") };
+  await plans.insertOne({ ...document }); return document;
+ }
+ async deleteMealPlan(id: number, userId: number) { await plans.deleteOne({ id, userId }); }
+ async getShoppingList(userId: number) { return shopping.find({ userId }, { projection }).toArray(); }
+ async createShoppingItem(item: InsertShoppingItem, userId: number) {
+  if (item.recipeId && !await this.getRecipe(item.recipeId, userId)) missing();
+  const document = { ...item, isBought: item.isBought ?? false, userId, id: await nextId("shopping_list") };
+  await shopping.insertOne({ ...document }); return document;
+ }
+ async updateShoppingItem(id: number, updates: Partial<InsertShoppingItem>, userId: number) {
+  if (updates.recipeId && !await this.getRecipe(updates.recipeId, userId)) missing();
+  return await shopping.findOneAndUpdate({ id, userId }, { $set: updates }, { returnDocument: "after", projection }) ?? missing();
+ }
+ async deleteShoppingItem(id: number, userId: number) { await shopping.deleteOne({ id, userId }); }
+ async clearShoppingList(userId: number) { await shopping.deleteMany({ userId }); }
+ async addIngredientsToShoppingList(recipeId: number, userId: number) {
+  const recipe = await this.getRecipe(recipeId, userId);
+  if (!recipe) missing();
+  const items = await Promise.all(recipe.ingredients.map(async i => ({ ...i, userId, recipeId, isBought: false, id: await nextId("shopping_list") })));
+  if (items.length) await shopping.insertMany(items);
+ }
 }
-
-export class DatabaseStorage implements IStorage {
-  async createRecipe(recipe: RecipeWithDetails, userId: number): Promise<Recipe> {
-    return await db.transaction(async (tx) => {
-      const [newRecipe] = await tx.insert(recipes).values({
-        ...recipe,
-        userId,
-      }).returning();
-
-      if (recipe.ingredients.length > 0) {
-        await tx.insert(ingredients).values(
-          recipe.ingredients.map(i => ({ ...i, recipeId: newRecipe.id }))
-        );
-      }
-
-      if (recipe.spices.length > 0) {
-        await tx.insert(spices).values(
-          recipe.spices.map(s => ({ ...s, recipeId: newRecipe.id }))
-        );
-      }
-
-      if (recipe.steps.length > 0) {
-        await tx.insert(steps).values(
-          recipe.steps.map(s => ({ ...s, recipeId: newRecipe.id }))
-        );
-      }
-
-      return newRecipe;
-    });
-  }
-
-  async getRecipe(id: number): Promise<(Recipe & { ingredients: any[], spices: any[], steps: any[] }) | undefined> {
-    return await db.query.recipes.findFirst({
-      where: eq(recipes.id, id),
-      with: {
-        ingredients: true,
-        spices: true,
-        steps: {
-          orderBy: (steps, { asc }) => [asc(steps.order)],
-        },
-      },
-    });
-  }
-
-  async getRecipes(userId: number, category?: string, search?: string): Promise<Recipe[]> {
-    let conditions = [eq(recipes.userId, userId)];
-    
-    if (category) {
-      conditions.push(eq(recipes.category, category as any));
-    }
-
-    if (search) {
-      conditions.push(sql`lower(${recipes.title}) LIKE lower(${`%${search}%`})`);
-    }
-
-    return await db.select().from(recipes)
-      .where(and(...conditions))
-      .orderBy(desc(recipes.createdAt));
-  }
-
-  async updateRecipe(id: number, updates: Partial<RecipeWithDetails>, userId: number): Promise<Recipe> {
-    return await db.transaction(async (tx) => {
-      // Verify ownership
-      const [existing] = await tx.select().from(recipes).where(and(eq(recipes.id, id), eq(recipes.userId, userId)));
-      if (!existing) throw new Error("Recipe not found or unauthorized");
-
-      // Update base recipe
-      const { ingredients: newIngredients, spices: newSpices, steps: newSteps, ...recipeFields } = updates;
-      
-      const [updatedRecipe] = await tx.update(recipes)
-        .set({ ...recipeFields, updatedAt: new Date() })
-        .where(eq(recipes.id, id))
-        .returning();
-
-      // Replace sub-entities if provided
-      // Note: In a real app we might diff, but for MVP replacing ensures consistency with UI state
-      if (newIngredients) {
-        await tx.delete(ingredients).where(eq(ingredients.recipeId, id));
-        if (newIngredients.length > 0) {
-          await tx.insert(ingredients).values(newIngredients.map(i => ({ ...i, recipeId: id })));
-        }
-      }
-
-      if (newSpices) {
-        await tx.delete(spices).where(eq(spices.recipeId, id));
-        if (newSpices.length > 0) {
-          await tx.insert(spices).values(newSpices.map(s => ({ ...s, recipeId: id })));
-        }
-      }
-
-      if (newSteps) {
-        await tx.delete(steps).where(eq(steps.recipeId, id));
-        if (newSteps.length > 0) {
-          await tx.insert(steps).values(newSteps.map(s => ({ ...s, recipeId: id })));
-        }
-      }
-
-      return updatedRecipe;
-    });
-  }
-
-  async deleteRecipe(id: number, userId: number): Promise<void> {
-    await db.delete(recipes).where(and(eq(recipes.id, id), eq(recipes.userId, userId)));
-  }
-
-  // Meal Plans
-  async getMealPlans(userId: number, startDate: string, endDate: string): Promise<(MealPlan & { recipe: Recipe })[]> {
-    return await db.query.mealPlans.findMany({
-      where: and(
-        eq(mealPlans.userId, userId),
-        sql`${mealPlans.date} >= ${startDate}`,
-        sql`${mealPlans.date} <= ${endDate}`
-      ),
-      with: {
-        recipe: true
-      }
-    });
-  }
-
-  async createMealPlan(plan: InsertMealPlan, userId: number): Promise<MealPlan> {
-    const [newPlan] = await db.insert(mealPlans).values({ ...plan, userId }).returning();
-    return newPlan;
-  }
-
-  async deleteMealPlan(id: number, userId: number): Promise<void> {
-    await db.delete(mealPlans).where(and(eq(mealPlans.id, id), eq(mealPlans.userId, userId)));
-  }
-
-  // Shopping List
-  async getShoppingList(userId: number): Promise<ShoppingItem[]> {
-    return await db.select().from(shoppingList).where(eq(shoppingList.userId, userId));
-  }
-
-  async createShoppingItem(item: InsertShoppingItem, userId: number): Promise<ShoppingItem> {
-    const [newItem] = await db.insert(shoppingList).values({ ...item, userId }).returning();
-    return newItem;
-  }
-
-  async updateShoppingItem(id: number, updates: Partial<InsertShoppingItem>, userId: number): Promise<ShoppingItem> {
-    const [updated] = await db.update(shoppingList)
-      .set(updates)
-      .where(and(eq(shoppingList.id, id), eq(shoppingList.userId, userId)))
-      .returning();
-    return updated;
-  }
-
-  async deleteShoppingItem(id: number, userId: number): Promise<void> {
-    await db.delete(shoppingList).where(and(eq(shoppingList.id, id), eq(shoppingList.userId, userId)));
-  }
-
-  async clearShoppingList(userId: number): Promise<void> {
-    await db.delete(shoppingList).where(eq(shoppingList.userId, userId));
-  }
-
-  async addIngredientsToShoppingList(recipeId: number, userId: number): Promise<void> {
-    const recipeIngredients = await db.select().from(ingredients).where(eq(ingredients.recipeId, recipeId));
-    if (recipeIngredients.length > 0) {
-      await db.insert(shoppingList).values(
-        recipeIngredients.map(i => ({
-          userId,
-          name: i.name,
-          quantity: i.quantity,
-          unit: i.unit,
-          recipeId,
-          isBought: false
-        }))
-      );
-    }
-  }
-}
-
 export const storage = new DatabaseStorage();

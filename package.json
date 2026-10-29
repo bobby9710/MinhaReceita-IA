@@ -4,14 +4,16 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "NODE_ENV=development tsx server/index.ts",
+    "dev": "node --import tsx script/dev.ts",
     "build": "tsx script/build.ts",
-    "start": "NODE_ENV=production node dist/index.cjs",
+    "start": "node --env-file-if-exists=.env dist/index.cjs",
     "check": "tsc",
-    "db:push": "drizzle-kit push",
     "build:frontend": "vite build",
     "build:backend": "tsx script/build-backend.ts",
-    "start:backend": "NODE_ENV=production node dist/index.cjs"
+    "start:backend": "node --env-file-if-exists=.env dist/index.cjs",
+    "db:check": "tsx script/check-db.ts",
+    "test": "tsx --test tests/*.test.ts",
+    "media:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File script/setup-media.ps1"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -50,18 +52,20 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
-    "connect-pg-simple": "^10.0.0",
+    "connect-mongo": "^5.1.0",
     "date-fns": "^3.6.0",
-    "drizzle-orm": "^0.39.3",
-    "drizzle-zod": "^0.7.1",
+    "dotenv": "^18.0.9",
     "embla-carousel-react": "^8.6.0",
     "express": "^4.21.2",
+    "express-async-errors": "^3.1.1",
     "express-session": "^1.18.2",
+    "ffmpeg-static": "^5.3.0",
     "framer-motion": "^11.18.2",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.453.0",
     "memoizee": "^0.4.17",
     "memorystore": "^1.6.7",
+    "mongodb": "^6.21.0",
     "next-themes": "^0.4.6",
     "openai": "^6.16.0",
     "openid-client": "^6.8.1",
@@ -69,7 +73,6 @@
     "p-retry": "^7.1.1",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
-    "pg": "^8.16.3",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
@@ -94,7 +97,6 @@
     "@replit/vite-plugin-runtime-error-modal": "^0.0.3",
     "@tailwindcss/typography": "^0.5.15",
     "@tailwindcss/vite": "^4.1.18",
-    "@types/connect-pg-simple": "^7.0.3",
     "@types/express": "4.17.21",
     "@types/express-session": "^1.18.2",
     "@types/node": "20.19.27",
@@ -105,20 +107,18 @@
     "@types/ws": "^8.5.13",
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.20",
-    "drizzle-kit": "^0.31.8",
     "esbuild": "^0.25.0",
+    "mongodb-memory-server": "^11.3.0",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.20.5",
     "typescript": "5.6.3",
     "vite": "^7.3.0"
   },
-  "overrides": {
-    "drizzle-kit": {
-      "@esbuild-kit/esm-loader": "npm:tsx@^4.20.4"
-    }
-  },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

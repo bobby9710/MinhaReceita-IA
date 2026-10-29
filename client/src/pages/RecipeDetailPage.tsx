@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { getIngredientIcon } from "@/lib/ingredient-icons";
+import { ImportEvidence } from "@/components/ImportEvidence";
 
 export default function RecipeDetailPage() {
   const [, params] = useRoute("/recipes/:id");
@@ -57,6 +58,7 @@ export default function RecipeDetailPage() {
         </Link>
       </div>
 
+      <ImportEvidence report={recipe.importAnalysis} />
       <div className="grid lg:grid-cols-2 gap-12">
         {/* Left: Image & Info */}
         <div className="space-y-8">

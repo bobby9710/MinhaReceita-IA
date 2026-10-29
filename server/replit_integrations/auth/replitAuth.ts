@@ -2,7 +2,8 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
-import connectPg from "connect-pg-simple";
+import MongoStore from "connect-mongo";
+import { mongoClient, db } from "../../db";
 import bcrypt from "bcryptjs";
 import { authStorage } from "./storage";
 import { User as SelectUser } from "@shared/models/auth";
@@ -26,16 +27,17 @@ function getSessionCookieConfig(isProduction: boolean): session.CookieOptions {
 }
 
 export async function setupAuth(app: Express) {
-  const PostgresStore = connectPg(session);
-  const sessionStore = new PostgresStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
-    tableName: "sessions",
+  const sessionStore = MongoStore.create({
+    clientPromise: Promise.resolve(mongoClient),
+    dbName: db.databaseName,
+    collectionName: "sessions",
+    ttl: 7 * 24 * 60 * 60,
   });
+  if (!process.env.SESSION_SECRET) throw new Error("Configure SESSION_SECRET no arquivo .env.");
 
   app.use(
     session({
-      secret: process.env.SESSION_SECRET || "minha-receita-secret",
+      secret: process.env.SESSION_SECRET,
       resave: false,
       saveUninitialized: false,
       store: sessionStore,

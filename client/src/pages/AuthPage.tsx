@@ -22,7 +22,7 @@ export default function AuthPage() {
   });
 
   const registerForm = useForm({
-    defaultValues: { username: "", password: "", firstName: "", email: "" }
+    defaultValues: { username: "", password: "", firstName: "" }
   });
 
   if (user) {
@@ -89,6 +89,8 @@ export default function AuthPage() {
               <input 
                 {...(isRegistering ? registerForm.register("username") : loginForm.register("username"))}
                 placeholder="Digite seu usuário"
+                minLength={isRegistering ? 3 : undefined}
+                maxLength={100}
                 className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:ring-2 focus:ring-primary/20 outline-none" 
                 required
               />
@@ -100,10 +102,14 @@ export default function AuthPage() {
                 type="password"
                 {...(isRegistering ? registerForm.register("password") : loginForm.register("password"))}
                 placeholder="Digite sua senha"
+                minLength={isRegistering ? 8 : undefined}
+                maxLength={isRegistering ? 200 : undefined}
                 className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:ring-2 focus:ring-primary/20 outline-none" 
                 required
               />
             </div>
+
+            {isRegistering && <p className="text-sm text-muted-foreground">Use uma senha com pelo menos 8 caracteres.</p>}
 
             <button 
               type="submit"

@@ -19,7 +19,7 @@ export function useAddShoppingItem() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (data: Omit<ShoppingItem, "id" | "userId" | "isBought" | "recipeId">) => {
+    mutationFn: async (data: Omit<ShoppingItem, "id" | "userId">) => {
       const res = await apiFetch(api.shoppingList.create.path, {
         method: api.shoppingList.create.method,
         headers: { "Content-Type": "application/json" },
